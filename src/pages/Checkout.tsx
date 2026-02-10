@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShieldCheck, Truck, CreditCard, Building2, Upload, Tag, X, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Truck, CreditCard, Building2, Upload, Tag, X, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { CartDrawer } from '@/components/layout/CartDrawer';
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const DELIVERY_LOCATIONS = [
   { id: 'lagos-island', name: 'Lagos Island', fee: 2500 },
@@ -26,6 +27,7 @@ const DELIVERY_LOCATIONS = [
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { items, getTotalPrice, clearCart } = useCartStore();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -38,6 +40,37 @@ export default function Checkout() {
   const [discount, setDiscount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+
+  // Verify Paystack payment on callback
+  useEffect(() => {
+    const verifyRef = searchParams.get('verify');
+    if (verifyRef) {
+      (async () => {
+        setIsProcessing(true);
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) throw new Error('Not authenticated');
+          
+          const res = await supabase.functions.invoke('verify-paystack', {
+            body: { reference: verifyRef },
+          });
+          
+          if (res.error) throw res.error;
+          if (res.data?.status === 'success') {
+            setOrderPlaced(true);
+            clearCart();
+            toast({ title: 'Payment successful!', description: 'Your order has been confirmed.' });
+          } else {
+            toast({ title: 'Payment failed', description: 'Please try again.', variant: 'destructive' });
+          }
+        } catch (err: any) {
+          toast({ title: 'Verification error', description: err.message, variant: 'destructive' });
+        } finally {
+          setIsProcessing(false);
+        }
+      })();
+    }
+  }, [searchParams]);
 
   const [shippingInfo, setShippingInfo] = useState({
     firstName: user?.name?.split(' ')[0] || '',
@@ -80,12 +113,90 @@ export default function Checkout() {
   };
 
   const handlePlaceOrder = async () => {
+    if (!isAuthenticated) {
+      toast({ title: 'Please log in', description: 'You need to be logged in to place an order.', variant: 'destructive' });
+      navigate('/auth', { state: { from: { pathname: '/checkout' } } });
+      return;
+    }
+
     setIsProcessing(true);
-    // Simulate order processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsProcessing(false);
-    setOrderPlaced(true);
-    clearCart();
+    try {
+      const locationName = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.name || '';
+
+      // Create order in database
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user!.id,
+          payment_method: paymentMethod,
+          payment_status: 'pending',
+          status: 'pending',
+          subtotal,
+          shipping_fee: shippingFee,
+          discount: discountAmount,
+          total,
+          coupon_code: couponApplied ? couponCode.toUpperCase() : null,
+          shipping_name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+          shipping_email: shippingInfo.email,
+          shipping_phone: shippingInfo.phone,
+          shipping_address: shippingInfo.address,
+          shipping_city: shippingInfo.city || locationName,
+          shipping_state: shippingInfo.state || locationName,
+          notes: shippingInfo.notes || null,
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Insert order items
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        product_id: item.productId,
+        product_name: item.name,
+        product_image: item.image,
+        variant_style: item.variant.style,
+        variant_price: item.variant.price,
+        color: item.color,
+        quantity: item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) throw itemsError;
+
+      if (paymentMethod === 'paystack') {
+        // Initialize Paystack payment
+        const res = await supabase.functions.invoke('initialize-paystack', {
+          body: {
+            email: shippingInfo.email,
+            amount: total,
+            orderId: order.id,
+            callbackUrl: `${window.location.origin}/checkout?verify=${order.id}`,
+          },
+        });
+
+        if (res.error) throw res.error;
+
+        // Redirect to Paystack
+        window.location.href = res.data.authorization_url;
+        return;
+      } else {
+        // Bank transfer - mark as awaiting payment
+        await supabase
+          .from('orders')
+          .update({ payment_status: 'awaiting_transfer' })
+          .eq('id', order.id);
+
+        setOrderPlaced(true);
+        clearCart();
+        toast({ title: 'Order placed!', description: 'Please complete your bank transfer to confirm.' });
+      }
+    } catch (err: any) {
+      console.error('Order error:', err);
+      toast({ title: 'Order failed', description: err.message || 'Something went wrong.', variant: 'destructive' });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const isShippingValid =
