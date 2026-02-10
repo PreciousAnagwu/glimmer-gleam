@@ -11,6 +11,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import VerifyEmail from "./pages/VerifyEmail";
+import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/bestsellers" element={<Shop />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route
               path="/account"
               element={
