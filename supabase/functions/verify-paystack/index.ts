@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const supabaseAdmin = createClient(
@@ -32,11 +32,9 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(
-      authHeader.replace('Bearer ', '')
-    );
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const { reference } = await req.json();
@@ -47,7 +45,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify with Paystack
     const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
       headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
     });
@@ -58,9 +55,8 @@ Deno.serve(async (req) => {
       throw new Error(`Paystack verify failed [${verifyRes.status}]: ${JSON.stringify(verifyData)}`);
     }
 
-    const txStatus = verifyData.data.status; // 'success', 'failed', etc.
+    const txStatus = verifyData.data.status;
 
-    // Update order payment status using service role
     const { error: updateError } = await supabaseAdmin
       .from('orders')
       .update({
