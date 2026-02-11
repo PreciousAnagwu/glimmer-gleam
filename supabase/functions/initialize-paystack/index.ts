@@ -16,10 +16,9 @@ Deno.serve(async (req) => {
       throw new Error('PAYSTACK_SECRET_KEY is not configured');
     }
 
-    // Verify auth
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const supabase = createClient(
@@ -28,14 +27,10 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(
-      authHeader.replace('Bearer ', '')
-    );
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-
-    const userId = claimsData.claims.sub;
 
     const { email, amount, orderId, callbackUrl } = await req.json();
 
@@ -46,7 +41,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Initialize Paystack transaction
     const paystackRes = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -55,12 +49,12 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         email,
-        amount: Math.round(amount * 100), // Paystack expects kobo
+        amount: Math.round(amount * 100),
         reference: orderId,
         callback_url: callbackUrl || `${req.headers.get('origin')}/checkout?verify=${orderId}`,
         metadata: {
           order_id: orderId,
-          user_id: userId,
+          user_id: user.id,
         },
       }),
     });

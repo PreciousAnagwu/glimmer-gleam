@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShieldCheck, Truck, CreditCard, Building2, Upload, Tag, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Truck, CreditCard, Building2, Upload, Tag, X, CheckCircle2, Loader2, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +40,10 @@ export default function Checkout() {
   const [discount, setDiscount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Verify Paystack payment on callback
   useEffect(() => {
@@ -112,6 +116,46 @@ export default function Checkout() {
     setDiscount(0);
   };
 
+  const handleReceiptSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Maximum file size is 5MB.', variant: 'destructive' });
+      return;
+    }
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'application/pdf'].includes(file.type)) {
+      toast({ title: 'Invalid file', description: 'Please upload a PNG, JPG, or PDF file.', variant: 'destructive' });
+      return;
+    }
+    setReceiptFile(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setReceiptPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setReceiptPreview(null);
+    }
+  };
+
+  const uploadReceipt = async (orderId: string): Promise<string | null> => {
+    if (!receiptFile || !user) return null;
+    setUploadingReceipt(true);
+    try {
+      const ext = receiptFile.name.split('.').pop();
+      const filePath = `${user.id}/${orderId}.${ext}`;
+      const { error } = await supabase.storage.from('receipts').upload(filePath, receiptFile, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('receipts').getPublicUrl(filePath);
+      return publicUrl;
+    } catch (err: any) {
+      console.error('Receipt upload error:', err);
+      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+      return null;
+    } finally {
+      setUploadingReceipt(false);
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!isAuthenticated) {
       toast({ title: 'Please log in', description: 'You need to be logged in to place an order.', variant: 'destructive' });
@@ -119,11 +163,15 @@ export default function Checkout() {
       return;
     }
 
+    if (paymentMethod === 'bank-transfer' && !receiptFile) {
+      toast({ title: 'Receipt required', description: 'Please upload your payment receipt before placing the order.', variant: 'destructive' });
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const locationName = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.name || '';
 
-      // Create order in database
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -149,7 +197,6 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // Insert order items
       const orderItems = items.map(item => ({
         order_id: order.id,
         product_id: item.productId,
@@ -165,7 +212,6 @@ export default function Checkout() {
       if (itemsError) throw itemsError;
 
       if (paymentMethod === 'paystack') {
-        // Initialize Paystack payment
         const res = await supabase.functions.invoke('initialize-paystack', {
           body: {
             email: shippingInfo.email,
@@ -176,20 +222,27 @@ export default function Checkout() {
         });
 
         if (res.error) throw res.error;
+        if (!res.data?.authorization_url) {
+          throw new Error('No payment URL received from Paystack');
+        }
 
-        // Redirect to Paystack
         window.location.href = res.data.authorization_url;
         return;
       } else {
-        // Bank transfer - mark as awaiting payment
+        // Bank transfer - upload receipt
+        const receiptUrl = await uploadReceipt(order.id);
+        
         await supabase
           .from('orders')
-          .update({ payment_status: 'awaiting_transfer' })
+          .update({ 
+            payment_status: 'awaiting_confirmation',
+            payment_receipt_url: receiptUrl,
+          })
           .eq('id', order.id);
 
         setOrderPlaced(true);
         clearCart();
-        toast({ title: 'Order placed!', description: 'Please complete your bank transfer to confirm.' });
+        toast({ title: 'Order placed!', description: 'We\'ll confirm your payment receipt shortly.' });
       }
     } catch (err: any) {
       console.error('Order error:', err);
@@ -264,7 +317,6 @@ export default function Checkout() {
 
       <main className="flex-1 bg-gradient-luxury">
         <div className="container mx-auto px-4 py-8">
-          {/* Header */}
           <div className="mb-8 flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
@@ -272,7 +324,6 @@ export default function Checkout() {
             <h1 className="font-display text-2xl font-bold lg:text-3xl">Checkout</h1>
           </div>
 
-          {/* Progress Steps */}
           <div className="mb-10 flex items-center justify-center gap-2">
             {[
               { num: 1, label: 'Shipping' },
@@ -299,7 +350,6 @@ export default function Checkout() {
           </div>
 
           <div className="grid gap-8 lg:grid-cols-3">
-            {/* Main Content */}
             <div className="lg:col-span-2">
               <motion.div
                 key={step}
@@ -380,7 +430,7 @@ export default function Checkout() {
                       <h2 className="font-display text-xl font-semibold">Payment Method</h2>
                     </div>
 
-                    <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+                    <RadioGroup value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); setReceiptFile(null); setReceiptPreview(null); }} className="space-y-3">
                       <div className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${paymentMethod === 'paystack' ? 'border-gold bg-gold/5' : 'border-border hover:border-gold/50'}`}>
                         <RadioGroupItem value="paystack" id="paystack" />
                         <Label htmlFor="paystack" className="flex flex-1 cursor-pointer items-center gap-3">
@@ -413,14 +463,41 @@ export default function Checkout() {
                           <p><span className="text-muted-foreground">Account Number:</span> <span className="font-medium">0123456789</span></p>
                         </div>
                         <div className="mt-4 space-y-2">
-                          <Label>Upload Payment Receipt</Label>
-                          <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-gold/50">
-                            <div className="text-center">
-                              <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                              <p className="mt-2 text-sm text-muted-foreground">Click to upload or drag and drop</p>
-                              <p className="text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
+                          <Label>Upload Payment Receipt *</Label>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
+                            onChange={handleReceiptSelect}
+                            className="hidden"
+                          />
+                          {receiptFile ? (
+                            <div className="flex items-center gap-3 rounded-lg border border-gold bg-gold/5 p-3">
+                              {receiptPreview ? (
+                                <img src={receiptPreview} alt="Receipt" className="h-16 w-16 rounded-lg object-cover" />
+                              ) : (
+                                <FileImage className="h-10 w-10 text-gold" />
+                              )}
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{receiptFile.name}</p>
+                                <p className="text-xs text-muted-foreground">{(receiptFile.size / 1024).toFixed(0)} KB</p>
+                              </div>
+                              <Button variant="ghost" size="icon-sm" onClick={() => { setReceiptFile(null); setReceiptPreview(null); }}>
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
-                          </div>
+                          ) : (
+                            <button
+                              onClick={() => fileInputRef.current?.click()}
+                              className="flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-gold/50 hover:bg-gold/5"
+                            >
+                              <div className="text-center">
+                                <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
+                                <p className="mt-2 text-sm text-muted-foreground">Click to upload receipt</p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG, PDF up to 5MB</p>
+                              </div>
+                            </button>
+                          )}
                         </div>
                       </motion.div>
                     )}
@@ -444,7 +521,6 @@ export default function Checkout() {
                       <h2 className="font-display text-xl font-semibold">Review Your Order</h2>
                     </div>
 
-                    {/* Shipping Summary */}
                     <div className="rounded-lg bg-secondary/50 p-4">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">Shipping Details</h3>
@@ -458,7 +534,6 @@ export default function Checkout() {
                       </div>
                     </div>
 
-                    {/* Payment Summary */}
                     <div className="rounded-lg bg-secondary/50 p-4">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">Payment Method</h3>
@@ -467,9 +542,11 @@ export default function Checkout() {
                       <p className="mt-2 text-sm text-muted-foreground">
                         {paymentMethod === 'paystack' ? 'Paystack (Card / Bank Transfer / USSD)' : 'Direct Bank Transfer'}
                       </p>
+                      {paymentMethod === 'bank-transfer' && receiptFile && (
+                        <p className="text-sm text-gold mt-1">✓ Receipt uploaded: {receiptFile.name}</p>
+                      )}
                     </div>
 
-                    {/* Items */}
                     <div className="space-y-3">
                       <h3 className="font-semibold">Items ({items.length})</h3>
                       {items.map(item => (
@@ -492,10 +569,14 @@ export default function Checkout() {
                         variant="gold"
                         size="lg"
                         className="flex-1"
-                        disabled={isProcessing}
+                        disabled={isProcessing || uploadingReceipt}
                         onClick={handlePlaceOrder}
                       >
-                        {isProcessing ? 'Processing...' : `Place Order — ${formatPrice(total)}`}
+                        {isProcessing || uploadingReceipt ? (
+                          <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing...</>
+                        ) : (
+                          `Place Order — ${formatPrice(total)}`
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -508,7 +589,6 @@ export default function Checkout() {
               <div className="sticky top-32 space-y-6 rounded-xl border border-border bg-background p-6 shadow-soft">
                 <h2 className="font-display text-lg font-semibold">Order Summary</h2>
 
-                {/* Items Preview */}
                 <div className="max-h-60 space-y-3 overflow-y-auto">
                   {items.map(item => (
                     <div key={item.id} className="flex items-center gap-3">
@@ -529,7 +609,6 @@ export default function Checkout() {
 
                 <Separator />
 
-                {/* Coupon */}
                 <div>
                   {couponApplied ? (
                     <div className="flex items-center justify-between rounded-lg bg-gold/10 p-3">
@@ -557,7 +636,6 @@ export default function Checkout() {
 
                 <Separator />
 
-                {/* Totals */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
@@ -580,7 +658,6 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                {/* Trust Badges */}
                 <div className="space-y-2 rounded-lg bg-secondary/50 p-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-gold" /> Secure checkout</div>
                   <div className="flex items-center gap-2"><Truck className="h-4 w-4 text-gold" /> Free shipping over ₦50,000</div>
