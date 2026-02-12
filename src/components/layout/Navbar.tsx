@@ -1,17 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ShoppingBag, User, Search, Heart } from 'lucide-react';
+import { Menu, X, ShoppingBag, User, Search, Heart, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { categories } from '@/data/products';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { getTotalItems, openCart } = useCartStore();
+  const { user } = useAuth();
   const totalItems = getTotalItems();
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data }) => {
+      setIsAdmin(!!data);
+    });
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -112,6 +123,13 @@ export function Navbar() {
               <Button variant="ghost" size="icon" className="hidden sm:flex">
                 <Heart className="h-5 w-5" />
               </Button>
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="ghost" size="icon" className="text-gold">
+                    <Shield className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
               <Link to="/account">
                 <Button variant="ghost" size="icon">
                   <User className="h-5 w-5" />
