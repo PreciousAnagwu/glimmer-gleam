@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Filter, SlidersHorizontal, Grid3X3, LayoutGrid, X } from 'lucide-react';
+import { Filter, SlidersHorizontal, Grid3X3, LayoutGrid, X, Loader2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { WhatsAppFloat } from '@/components/layout/WhatsAppFloat';
 import { CartDrawer } from '@/components/layout/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/button';
-import { products, categories } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 
 const sortOptions = [
   { value: 'featured', label: 'Featured' },
@@ -22,28 +22,25 @@ export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [gridCols, setGridCols] = useState<2 | 3 | 4>(3);
+  const { products, categories, loading } = useProducts();
 
   const selectedCategory = searchParams.get('category') || '';
   const sortBy = searchParams.get('sort') || 'featured';
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
-
-    // Filter by category
     if (selectedCategory) {
       result = result.filter((p) => p.category === selectedCategory);
     }
-
-    // Sort
     switch (sortBy) {
       case 'newest':
         result = result.filter((p) => p.newArrival).concat(result.filter((p) => !p.newArrival));
         break;
       case 'price-low':
-        result.sort((a, b) => a.variants[0].price - b.variants[0].price);
+        result.sort((a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0));
         break;
       case 'price-high':
-        result.sort((a, b) => b.variants[0].price - a.variants[0].price);
+        result.sort((a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0));
         break;
       case 'rating':
         result.sort((a, b) => b.rating - a.rating);
@@ -51,9 +48,8 @@ export default function Shop() {
       default:
         result = result.filter((p) => p.featured).concat(result.filter((p) => !p.featured));
     }
-
     return result;
-  }, [selectedCategory, sortBy]);
+  }, [products, selectedCategory, sortBy]);
 
   const handleCategoryChange = (category: string) => {
     if (category) {
@@ -69,13 +65,24 @@ export default function Shop() {
     setSearchParams(searchParams);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="py-8">
         <div className="container mx-auto px-4">
-          {/* Header */}
           <div className="mb-8">
             <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
               {selectedCategory
@@ -96,7 +103,6 @@ export default function Shop() {
           </div>
 
           <div className="flex gap-8">
-            {/* Sidebar Filters - Desktop */}
             <aside className="hidden w-64 shrink-0 lg:block">
               <div className="sticky top-24 space-y-6">
                 <div>
@@ -105,9 +111,7 @@ export default function Shop() {
                     <button
                       onClick={() => handleCategoryChange('')}
                       className={`block w-full rounded-lg px-4 py-2 text-left text-sm transition-colors ${
-                        !selectedCategory
-                          ? 'bg-gold text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-secondary'
+                        !selectedCategory ? 'bg-gold text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'
                       }`}
                     >
                       All Products
@@ -117,9 +121,7 @@ export default function Shop() {
                         key={cat.id}
                         onClick={() => handleCategoryChange(cat.id)}
                         className={`flex w-full items-center gap-2 rounded-lg px-4 py-2 text-left text-sm transition-colors ${
-                          selectedCategory === cat.id
-                            ? 'bg-gold text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-secondary'
+                          selectedCategory === cat.id ? 'bg-gold text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'
                         }`}
                       >
                         <span>{cat.icon}</span>
@@ -131,23 +133,13 @@ export default function Shop() {
               </div>
             </aside>
 
-            {/* Main Content */}
             <div className="flex-1">
-              {/* Toolbar */}
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  {/* Mobile Filter Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="lg:hidden"
-                    onClick={() => setIsFilterOpen(true)}
-                  >
+                  <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setIsFilterOpen(true)}>
                     <Filter className="mr-2 h-4 w-4" />
                     Filters
                   </Button>
-
-                  {/* Sort Dropdown */}
                   <div className="relative">
                     <select
                       value={sortBy}
@@ -155,44 +147,27 @@ export default function Shop() {
                       className="appearance-none rounded-lg border border-border bg-background px-4 py-2 pr-10 text-sm outline-none focus:border-gold"
                     >
                       {sortOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
+                        <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
                     <SlidersHorizontal className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   </div>
                 </div>
-
-                {/* Grid Toggle */}
                 <div className="hidden items-center gap-2 md:flex">
-                  <Button
-                    variant={gridCols === 2 ? 'default' : 'ghost'}
-                    size="icon-sm"
-                    onClick={() => setGridCols(2)}
-                  >
+                  <Button variant={gridCols === 2 ? 'default' : 'ghost'} size="icon-sm" onClick={() => setGridCols(2)}>
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant={gridCols === 3 ? 'default' : 'ghost'}
-                    size="icon-sm"
-                    onClick={() => setGridCols(3)}
-                  >
+                  <Button variant={gridCols === 3 ? 'default' : 'ghost'} size="icon-sm" onClick={() => setGridCols(3)}>
                     <Grid3X3 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
 
-              {/* Products Grid */}
-              <div
-                className={`grid gap-6 ${
-                  gridCols === 2
-                    ? 'grid-cols-1 sm:grid-cols-2'
-                    : gridCols === 3
-                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
-                }`}
-              >
+              <div className={`grid gap-6 ${
+                gridCols === 2 ? 'grid-cols-1 sm:grid-cols-2'
+                  : gridCols === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+              }`}>
                 {filteredProducts.map((product, index) => (
                   <ProductCard key={product.id} product={product} index={index} />
                 ))}
@@ -201,11 +176,7 @@ export default function Shop() {
               {filteredProducts.length === 0 && (
                 <div className="py-20 text-center">
                   <p className="text-lg text-muted-foreground">No products found.</p>
-                  <Button
-                    variant="gold"
-                    className="mt-4"
-                    onClick={() => handleCategoryChange('')}
-                  >
+                  <Button variant="gold" className="mt-4" onClick={() => handleCategoryChange('')}>
                     View All Products
                   </Button>
                 </div>
@@ -215,7 +186,6 @@ export default function Shop() {
         </div>
       </main>
 
-      {/* Mobile Filter Drawer */}
       {isFilterOpen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -239,14 +209,9 @@ export default function Shop() {
             </div>
             <div className="space-y-2">
               <button
-                onClick={() => {
-                  handleCategoryChange('');
-                  setIsFilterOpen(false);
-                }}
+                onClick={() => { handleCategoryChange(''); setIsFilterOpen(false); }}
                 className={`block w-full rounded-lg px-4 py-2 text-left text-sm transition-colors ${
-                  !selectedCategory
-                    ? 'bg-gold text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-secondary'
+                  !selectedCategory ? 'bg-gold text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'
                 }`}
               >
                 All Products
@@ -254,14 +219,9 @@ export default function Shop() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => {
-                    handleCategoryChange(cat.id);
-                    setIsFilterOpen(false);
-                  }}
+                  onClick={() => { handleCategoryChange(cat.id); setIsFilterOpen(false); }}
                   className={`flex w-full items-center gap-2 rounded-lg px-4 py-2 text-left text-sm transition-colors ${
-                    selectedCategory === cat.id
-                      ? 'bg-gold text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-secondary'
+                    selectedCategory === cat.id ? 'bg-gold text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'
                   }`}
                 >
                   <span>{cat.icon}</span>

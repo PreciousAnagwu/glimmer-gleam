@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ShoppingBag, User, Search, Heart, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
-import { categories } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,7 @@ export function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const { getTotalItems, openCart } = useCartStore();
   const { user } = useAuth();
+  const { categories } = useProducts();
   const totalItems = getTotalItems();
 
   useEffect(() => {

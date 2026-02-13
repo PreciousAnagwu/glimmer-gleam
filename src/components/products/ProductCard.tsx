@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
-import type { Product } from '@/data/products';
+import type { Product } from '@/hooks/useProducts';
 import { toast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
