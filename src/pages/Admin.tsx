@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminProductManager } from '@/components/admin/AdminProductManager';
 
 interface OrderWithItems {
   id: string;
@@ -219,7 +220,13 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Orders Table */}
+        <Tabs defaultValue="orders" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="orders"><Package className="mr-2 h-4 w-4" />Orders</TabsTrigger>
+            <TabsTrigger value="products"><ShoppingBag className="mr-2 h-4 w-4" />Products</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="orders">
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -227,18 +234,10 @@ export default function Admin() {
               <div className="flex gap-2">
                 <div className="relative flex-1 sm:w-64">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search orders..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+                  <Input placeholder="Search orders..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="w-40"><Filter className="mr-2 h-4 w-4" /><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -254,9 +253,7 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
+              <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
             ) : filteredOrders.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">No orders found.</div>
             ) : (
@@ -327,9 +324,7 @@ export default function Admin() {
                                     <p className="font-medium">Items</p>
                                     {order.order_items?.map((item) => (
                                       <div key={item.id} className="flex items-center gap-3 text-sm">
-                                        {item.product_image && (
-                                          <img src={item.product_image} alt="" className="h-10 w-10 rounded object-cover" />
-                                        )}
+                                        {item.product_image && <img src={item.product_image} alt="" className="h-10 w-10 rounded object-cover" />}
                                         <div className="flex-1">
                                           <p className="font-medium">{item.product_name}</p>
                                           <p className="text-muted-foreground">{item.variant_style} • {item.color} × {item.quantity}</p>
@@ -363,33 +358,17 @@ export default function Admin() {
                                     <p className="text-sm font-medium">Update Status</p>
                                     <div className="flex flex-wrap gap-2">
                                       {['confirmed', 'processing', 'shipped', 'delivered', 'cancelled'].map((s) => (
-                                        <Button
-                                          key={s}
-                                          variant={order.status === s ? 'default' : 'outline'}
-                                          size="sm"
-                                          disabled={updatingOrderId === order.id}
-                                          onClick={() => updateOrderStatus(order.id, s)}
-                                        >
+                                        <Button key={s} variant={order.status === s ? 'default' : 'outline'} size="sm" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, s)}>
                                           {s}
                                         </Button>
                                       ))}
                                     </div>
                                     {order.payment_status === 'awaiting_confirmation' && (
                                       <div className="flex gap-2 mt-2">
-                                        <Button
-                                          variant="gold"
-                                          size="sm"
-                                          disabled={updatingOrderId === order.id}
-                                          onClick={() => updateOrderStatus(order.id, 'confirmed', 'paid')}
-                                        >
+                                        <Button variant="gold" size="sm" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, 'confirmed', 'paid')}>
                                           <CheckCircle className="h-4 w-4 mr-1" /> Confirm Payment
                                         </Button>
-                                        <Button
-                                          variant="destructive"
-                                          size="sm"
-                                          disabled={updatingOrderId === order.id}
-                                          onClick={() => updateOrderStatus(order.id, 'payment_failed', 'failed')}
-                                        >
+                                        <Button variant="destructive" size="sm" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, 'payment_failed', 'failed')}>
                                           <XCircle className="h-4 w-4 mr-1" /> Reject
                                         </Button>
                                       </div>
@@ -398,14 +377,8 @@ export default function Admin() {
                                 </div>
                               </DialogContent>
                             </Dialog>
-                            <Select
-                              value={order.status}
-                              onValueChange={(v) => updateOrderStatus(order.id, v)}
-                              disabled={updatingOrderId === order.id}
-                            >
-                              <SelectTrigger className="h-8 w-28 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
+                            <Select value={order.status} onValueChange={(v) => updateOrderStatus(order.id, v)} disabled={updatingOrderId === order.id}>
+                              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="confirmed">Confirmed</SelectItem>
@@ -425,6 +398,19 @@ export default function Admin() {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="products">
+            <Card>
+              <CardHeader>
+                <CardTitle>Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminProductManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
