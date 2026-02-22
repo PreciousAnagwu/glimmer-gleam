@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ShoppingBag, User, Search, Heart, Shield } from 'lucide-react';
+import { Menu, X, ShoppingBag, User, Search, Heart, Shield, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { useProducts } from '@/hooks/useProducts';
@@ -128,6 +128,13 @@ export function Navbar() {
                 <Link to="/admin">
                   <Button variant="ghost" size="icon" className="text-gold">
                     <Shield className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
+              {user && (
+                <Link to="/rewards">
+                  <Button variant="ghost" size="icon" className="text-primary">
+                    <Gift className="h-5 w-5" />
                   </Button>
                 </Link>
               )}

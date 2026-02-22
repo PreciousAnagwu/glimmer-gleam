@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Plus, Pencil, Trash2, Loader2, X, Save, Image as ImageIcon,
+  Plus, Pencil, Trash2, Loader2, X, Save, Image as ImageIcon, Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +70,7 @@ export function AdminProductManager() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -377,14 +378,17 @@ export function AdminProductManager() {
             {/* Images */}
             <div>
               <div className="flex items-center justify-between">
-                <Label>Image URLs</Label>
+                <Label>Images</Label>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, images: [...form.images, ''] })}>
                   <Plus className="mr-1 h-3 w-3" /> Add Image
                 </Button>
               </div>
               <div className="mt-2 space-y-2">
                 {form.images.map((url, i) => (
-                  <div key={i} className="flex gap-2">
+                  <div key={i} className="flex gap-2 items-center">
+                    {url && (
+                      <img src={url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
+                    )}
                     <Input
                       value={url}
                       onChange={(e) => {
@@ -392,8 +396,41 @@ export function AdminProductManager() {
                         imgs[i] = e.target.value;
                         setForm({ ...form, images: imgs });
                       }}
-                      placeholder="https://..."
+                      placeholder="Paste URL or upload..."
+                      className="flex-1"
                     />
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploading !== null}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setUploading(i);
+                          const fileName = `${Date.now()}-${file.name}`;
+                          const { data, error } = await supabase.storage
+                            .from('product-images')
+                            .upload(fileName, file);
+                          if (error) {
+                            toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+                          } else {
+                            const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(data.path);
+                            const imgs = [...form.images];
+                            imgs[i] = urlData.publicUrl;
+                            setForm({ ...form, images: imgs });
+                            toast({ title: 'Image uploaded!' });
+                          }
+                          setUploading(null);
+                        }}
+                      />
+                      <Button type="button" variant="outline" size="icon-sm" asChild disabled={uploading === i}>
+                        <span>
+                          {uploading === i ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        </span>
+                      </Button>
+                    </label>
                     {form.images.length > 1 && (
                       <Button
                         variant="ghost"

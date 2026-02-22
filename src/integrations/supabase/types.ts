@@ -80,6 +80,36 @@ export type Database = {
         }
         Relationships: []
       }
+      loyalty_points: {
+        Row: {
+          created_at: string
+          id: string
+          lifetime_points: number
+          points_balance: number
+          referral_code: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lifetime_points?: number
+          points_balance?: number
+          referral_code?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lifetime_points?: number
+          points_balance?: number
+          referral_code?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           color: string
@@ -199,6 +229,82 @@ export type Database = {
         }
         Relationships: []
       }
+      points_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string | null
+          points: number
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points: number
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          points?: number
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_answers: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_ai_generated: boolean
+          is_approved: boolean
+          question_id: string
+          responder_id: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_ai_generated?: boolean
+          is_approved?: boolean
+          question_id: string
+          responder_id?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_ai_generated?: boolean
+          is_approved?: boolean
+          question_id?: string
+          responder_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "product_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_colors: {
         Row: {
           hex: string
@@ -256,6 +362,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_questions: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          question: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          question: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          question?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       product_variants: {
         Row: {
@@ -372,6 +502,33 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          points_awarded: number
+          referred_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          referred_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          referred_id?: string
+          referrer_id?: string
+          status?: string
         }
         Relationships: []
       }

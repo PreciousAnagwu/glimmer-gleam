@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminProductManager } from '@/components/admin/AdminProductManager';
 import { AdminCouponManager } from '@/components/admin/AdminCouponManager';
+import { AdminQAManager } from '@/components/admin/AdminQAManager';
 
 interface OrderWithItems {
   id: string;
@@ -226,6 +227,7 @@ export default function Admin() {
             <TabsTrigger value="orders"><Package className="mr-2 h-4 w-4" />Orders</TabsTrigger>
             <TabsTrigger value="products"><ShoppingBag className="mr-2 h-4 w-4" />Products</TabsTrigger>
             <TabsTrigger value="coupons"><Tag className="mr-2 h-4 w-4" />Coupons</TabsTrigger>
+            <TabsTrigger value="qa"><MessageCircle className="mr-2 h-4 w-4" />Q&A</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders">
@@ -420,6 +422,17 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <AdminCouponManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="qa">
+            <Card>
+              <CardHeader>
+                <CardTitle>Product Q&A</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminQAManager />
               </CardContent>
             </Card>
           </TabsContent>

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/useProducts';
 import { useCartStore } from '@/store/cartStore';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductQA } from '@/components/products/ProductQA';
 import { toast } from '@/hooks/use-toast';
 
 export default function ProductDetail() {
@@ -229,6 +230,9 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
+
+          {/* Q&A Section */}
+          <ProductQA productId={product.id} productName={product.name} productDescription={product.description} />
 
           {relatedProducts.length > 0 && (
             <section className="mt-20">
