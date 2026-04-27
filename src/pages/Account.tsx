@@ -56,6 +56,7 @@ const Account: React.FC = () => {
   const { getProductById } = useProducts();
 
   const tabParam = searchParams.get('tab') || 'profile';
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
