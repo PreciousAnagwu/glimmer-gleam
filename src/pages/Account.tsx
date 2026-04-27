@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useWishlistStore } from '@/store/wishlistStore';
+import { useCartStore } from '@/store/cartStore';
+import { useProducts } from '@/hooks/useProducts';
+import { Trash2, ShoppingBag } from 'lucide-react';
 import { 
   User, 
   Package, 
@@ -44,9 +48,14 @@ interface Order {
 const Account: React.FC = () => {
   const { user, logout, updatePassword } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
-  
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const wishlistItems = useWishlistStore((s) => s.items);
+  const removeFromWishlist = useWishlistStore((s) => s.removeItem);
+  const addToCart = useCartStore((s) => s.addItem);
+  const { getProductById } = useProducts();
+
+  const tabParam = searchParams.get('tab') || 'profile';
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
