@@ -1,8 +1,57 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, MessageCircle, Send, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+
+const shopLinks: { label: string; to: string }[] = [
+  { label: 'All Products', to: '/shop' },
+  { label: 'New Arrivals', to: '/new-arrivals' },
+  { label: 'Bestsellers', to: '/bestsellers' },
+  { label: 'Collections', to: '/shop' },
+  { label: 'Sale', to: '/shop?sale=true' },
+];
+
+const helpLinks: { label: string; to: string }[] = [
+  { label: 'FAQ', to: '/help#faq' },
+  { label: 'Shipping Info', to: '/help#shipping' },
+  { label: 'Returns & Exchanges', to: '/help#returns' },
+  { label: 'Size Guide', to: '/help#size-guide' },
+  { label: 'Contact Us', to: '/help#contact' },
+];
+
+const accountLinks: { label: string; to: string }[] = [
+  { label: 'My Account', to: '/account?tab=profile' },
+  { label: 'Orders', to: '/account?tab=orders' },
+  { label: 'Wishlist', to: '/account?tab=wishlist' },
+  { label: 'My Coupons', to: '/account?tab=coupons' },
+  { label: 'Play & Earn', to: '/rewards' },
+];
 
 export function Footer() {
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      toast({ title: 'Invalid email', description: 'Please enter a valid email address.', variant: 'destructive' });
+      return;
+    }
+    setSubmitting(true);
+    // Persist locally — backend subscriber storage can be added later.
+    try {
+      const stored = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
+      if (!stored.includes(email)) stored.push(email);
+      localStorage.setItem('newsletter_subscribers', JSON.stringify(stored));
+      toast({ title: 'Welcome to Glamour!', description: 'Check your inbox for your 10% off code.' });
+      setEmail('');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <footer className="border-t border-border/50 bg-secondary/30">
       {/* Newsletter Section */}
@@ -15,14 +64,17 @@ export function Footer() {
             <p className="mt-3 text-muted-foreground">
               Subscribe for exclusive offers, early access to new collections, and 10% off your first order.
             </p>
-            <form className="mt-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <form onSubmit={handleSubscribe} className="mt-6 flex flex-col gap-3 sm:flex-row sm:gap-4">
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-gold"
               />
-              <Button variant="gold" size="lg" type="submit">
-                Subscribe
+              <Button variant="gold" size="lg" type="submit" disabled={submitting}>
+                {submitting ? 'Subscribing…' : 'Subscribe'}
               </Button>
             </form>
           </div>
@@ -50,14 +102,16 @@ export function Footer() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Instagram"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-gold hover:text-primary-foreground"
               >
                 <Instagram className="h-5 w-5" />
               </a>
               <a
-                href="https://wa.me/1234567890"
+                href="https://wa.me/2348000000000"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="WhatsApp"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-gold hover:text-primary-foreground"
               >
                 <MessageCircle className="h-5 w-5" />
@@ -66,6 +120,7 @@ export function Footer() {
                 href="https://t.me/glamour"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Telegram"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground transition-colors hover:bg-gold hover:text-primary-foreground"
               >
                 <Send className="h-5 w-5" />
@@ -77,13 +132,13 @@ export function Footer() {
           <div>
             <h4 className="font-display text-lg font-semibold text-foreground">Shop</h4>
             <ul className="mt-4 space-y-3">
-              {['All Products', 'New Arrivals', 'Bestsellers', 'Collections', 'Sale'].map((item) => (
-                <li key={item}>
+              {shopLinks.map((item) => (
+                <li key={item.label}>
                   <Link
-                    to="/shop"
+                    to={item.to}
                     className="text-sm text-muted-foreground transition-colors hover:text-gold"
                   >
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}
@@ -94,18 +149,16 @@ export function Footer() {
           <div>
             <h4 className="font-display text-lg font-semibold text-foreground">Help</h4>
             <ul className="mt-4 space-y-3">
-              {['FAQ', 'Shipping Info', 'Returns & Exchanges', 'Size Guide', 'Contact Us'].map(
-                (item) => (
-                  <li key={item}>
-                    <Link
-                      to="/help"
-                      className="text-sm text-muted-foreground transition-colors hover:text-gold"
-                    >
-                      {item}
-                    </Link>
-                  </li>
-                )
-              )}
+              {helpLinks.map((item) => (
+                <li key={item.label}>
+                  <Link
+                    to={item.to}
+                    className="text-sm text-muted-foreground transition-colors hover:text-gold"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -113,13 +166,13 @@ export function Footer() {
           <div>
             <h4 className="font-display text-lg font-semibold text-foreground">Account</h4>
             <ul className="mt-4 space-y-3">
-              {['My Account', 'Orders', 'Wishlist', 'My Coupons', 'Play & Earn'].map((item) => (
-                <li key={item}>
+              {accountLinks.map((item) => (
+                <li key={item.label}>
                   <Link
-                    to="/account"
+                    to={item.to}
                     className="text-sm text-muted-foreground transition-colors hover:text-gold"
                   >
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}
