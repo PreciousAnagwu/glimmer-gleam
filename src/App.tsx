@@ -14,6 +14,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Checkout from "./pages/Checkout";
 import Admin from "./pages/Admin";
 import Rewards from "./pages/Rewards";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
