@@ -115,7 +115,7 @@ export default function Admin() {
 
   const updateOrderStatus = async (orderId: string, status: string, paymentStatus?: string) => {
     setUpdatingOrderId(orderId);
-    const updateData: Record<string, string> = { status };
+    const updateData: { status: string; payment_status?: string } = { status };
     if (paymentStatus) updateData.payment_status = paymentStatus;
 
     const { error } = await supabase.from('orders').update(updateData).eq('id', orderId);
