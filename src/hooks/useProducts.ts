@@ -89,7 +89,7 @@ export function useProducts() {
     fetchAll();
 
     const channel = supabase
-      .channel('products-realtime')
+      .channel(`products-realtime-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => fetchAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => fetchAll())
       .subscribe();
