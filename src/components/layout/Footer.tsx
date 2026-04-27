@@ -183,7 +183,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Glamour & Co. All rights reserved.
+            © {new Date().getFullYear()} J's Jewels. All rights reserved.
           </p>
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
             Made with <Heart className="h-4 w-4 text-rose-gold" /> in Nigeria
