@@ -11,6 +11,7 @@ import { CartDrawer } from '@/components/layout/CartDrawer';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/useProducts';
 import { useCartStore } from '@/store/cartStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductQA } from '@/components/products/ProductQA';
 import { toast } from '@/hooks/use-toast';
@@ -20,12 +21,27 @@ export default function ProductDetail() {
   const { products, loading, getProductById } = useProducts();
   const product = getProductById(id || '');
   const { addItem } = useCartStore();
+  const { toggleItem, isInWishlist } = useWishlistStore();
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isLiked, setIsLiked] = useState(false);
+  const isLiked = product ? isInWishlist(product.id) : false;
+
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    const added = toggleItem({
+      productId: product.id,
+      name: product.name,
+      image: product.images[0],
+      price: product.variants[0].price,
+    });
+    toast({
+      title: added ? 'Added to wishlist' : 'Removed from wishlist',
+      description: product.name,
+    });
+  };
 
   if (loading) {
     return (
