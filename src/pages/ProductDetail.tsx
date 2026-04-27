@@ -225,7 +225,7 @@ export default function ProductDetail() {
                   <ShoppingBag className="mr-2 h-5 w-5" />
                   {product.inStock ? 'Add to Cart' : 'Out of Stock'}
                 </Button>
-                <Button variant={isLiked ? 'gold' : 'outline'} size="icon-lg" onClick={() => setIsLiked(!isLiked)}>
+                <Button variant={isLiked ? 'gold' : 'outline'} size="icon-lg" onClick={handleToggleWishlist}>
                   <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
                 </Button>
               </div>
