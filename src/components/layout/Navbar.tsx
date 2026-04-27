@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ShoppingBag, User, Search, Heart, Shield, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 import { useProducts } from '@/hooks/useProducts';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +15,7 @@ export function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const { getTotalItems, openCart } = useCartStore();
+  const wishlistCount = useWishlistStore((s) => s.items.length);
   const { user } = useAuth();
   const { categories } = useProducts();
   const totalItems = getTotalItems();
@@ -121,9 +123,16 @@ export function Navbar() {
               >
                 <Search className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="hidden sm:flex">
-                <Heart className="h-5 w-5" />
-              </Button>
+              <Link to="/account?tab=wishlist" className="hidden sm:flex">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Heart className="h-5 w-5" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-gold text-xs font-bold text-primary-foreground">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
               {isAdmin && (
                 <Link to="/admin">
                   <Button variant="ghost" size="icon" className="text-gold">

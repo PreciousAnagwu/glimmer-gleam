@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Eye, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 import type { Product } from '@/hooks/useProducts';
 import { toast } from '@/hooks/use-toast';
 
@@ -14,9 +15,23 @@ interface ProductCardProps {
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addItem } = useCartStore();
+  const { toggleItem, isInWishlist } = useWishlistStore();
+  const isLiked = isInWishlist(product.id);
+
+  const handleToggleWishlist = () => {
+    const added = toggleItem({
+      productId: product.id,
+      name: product.name,
+      image: product.images[0],
+      price: product.variants[0].price,
+    });
+    toast({
+      title: added ? 'Added to wishlist' : 'Removed from wishlist',
+      description: product.name,
+    });
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -113,7 +128,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
         {/* Wishlist Button */}
         <button
-          onClick={() => setIsLiked(!isLiked)}
+          onClick={handleToggleWishlist}
+          aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
           className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full transition-all ${
             isLiked
               ? 'bg-rose-gold text-primary-foreground'
