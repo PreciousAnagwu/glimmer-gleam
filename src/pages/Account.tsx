@@ -190,7 +190,7 @@ const Account: React.FC = () => {
           </motion.div>
 
           {/* Main Content */}
-          <Tabs defaultValue="profile" className="space-y-6">
+          <Tabs value={tabParam} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 gap-2 h-auto p-1 bg-muted/50">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" /><span className="hidden sm:inline">Profile</span>
