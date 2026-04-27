@@ -33,7 +33,7 @@ const Help = () => {
         <div className="mx-auto max-w-4xl">
           <h1 className="font-display text-4xl font-bold text-foreground md:text-5xl">Help Center</h1>
           <p className="mt-3 text-muted-foreground">
-            Everything you need to know about shopping with Glamour & Co.
+            Everything you need to know about shopping with J's Jewels.
           </p>
 
           {/* Quick nav */}
@@ -88,7 +88,7 @@ const Help = () => {
             <Card className="mt-6">
               <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
                 <p>• <strong className="text-foreground">Free shipping</strong> on orders over ₦50,000.</p>
-                <p>• Lagos: 1–3 business days (₦2,500 flat rate).</p>
+                <p>• Rivers State: 1–3 business days (₦2,500 flat rate).</p>
                 <p>• Other Nigerian states: 3–7 business days (₦4,500 flat rate).</p>
                 <p>• International: 7–21 business days, calculated at checkout.</p>
                 <p>• Tracking link is emailed once your order ships.</p>
@@ -103,7 +103,7 @@ const Help = () => {
               <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
                 <p>You may return unworn items in original packaging within <strong className="text-foreground">14 days</strong> of delivery.</p>
                 <p>Earrings and custom-engraved pieces are final sale for hygiene reasons.</p>
-                <p>Email <a className="text-gold" href="mailto:returns@glamour.co">returns@glamour.co</a> with your order number to start a return.</p>
+                <p>Email <a className="text-gold" href="mailto:panagwu@gmail.com">panagwu@gmail.com</a> with your order number to start a return.</p>
                 <p>Refunds are processed to the original payment method within 5–7 business days of receipt.</p>
               </CardContent>
             </Card>
@@ -139,15 +139,15 @@ const Help = () => {
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Mail className="h-4 w-4 text-gold" /> Email</CardTitle></CardHeader>
-                <CardContent><a href="mailto:hello@glamour.co" className="text-sm text-muted-foreground hover:text-gold">hello@glamour.co</a></CardContent>
+                <CardContent><a href="mailto:panagwu@gmail.com" className="text-sm text-muted-foreground hover:text-gold">panagwu@gmail.com</a></CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><MessageCircle className="h-4 w-4 text-gold" /> WhatsApp</CardTitle></CardHeader>
-                <CardContent><a href="https://wa.me/2348000000000" target="_blank" rel="noreferrer" className="text-sm text-muted-foreground hover:text-gold">+234 800 000 0000</a></CardContent>
+                <CardContent><a href="https://wa.me/2348034231231" target="_blank" rel="noreferrer" className="text-sm text-muted-foreground hover:text-gold">+234 803 423 1231</a></CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Phone className="h-4 w-4 text-gold" /> Phone</CardTitle></CardHeader>
-                <CardContent><a href="tel:+2348000000000" className="text-sm text-muted-foreground hover:text-gold">+234 800 000 0000</a></CardContent>
+                <CardContent><a href="tel:+2348034231231" className="text-sm text-muted-foreground hover:text-gold">+234 803 423 1231</a></CardContent>
               </Card>
             </div>
           </section>
