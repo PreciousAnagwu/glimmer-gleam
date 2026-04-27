@@ -333,16 +333,80 @@ const Account: React.FC = () => {
             <TabsContent value="wishlist">
               <Card>
                 <CardHeader>
-                  <CardTitle>My Wishlist</CardTitle>
+                  <CardTitle>My Wishlist ({wishlistItems.length})</CardTitle>
                   <CardDescription>Items you've saved for later</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12">
-                    <Heart className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-                    <h3 className="font-medium text-foreground mb-2">Your wishlist is empty</h3>
-                    <p className="text-muted-foreground mb-4">Start adding items you love to your wishlist</p>
-                    <Button variant="gold" onClick={() => navigate('/shop')}>Browse Products</Button>
-                  </div>
+                  {wishlistItems.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Heart className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                      <h3 className="font-medium text-foreground mb-2">Your wishlist is empty</h3>
+                      <p className="text-muted-foreground mb-4">Start adding items you love to your wishlist</p>
+                      <Button variant="gold" onClick={() => navigate('/shop')}>Browse Products</Button>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {wishlistItems.map((item) => {
+                        const product = getProductById(item.productId);
+                        return (
+                          <div key={item.productId} className="flex gap-4 rounded-lg border border-border p-4">
+                            <Link to={`/product/${item.productId}`} className="shrink-0">
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="h-24 w-24 rounded-md object-cover"
+                              />
+                            </Link>
+                            <div className="flex flex-1 flex-col justify-between">
+                              <div>
+                                <Link to={`/product/${item.productId}`}>
+                                  <h4 className="font-medium text-foreground hover:text-gold line-clamp-2">
+                                    {item.name}
+                                  </h4>
+                                </Link>
+                                <p className="mt-1 text-sm font-semibold text-gold">
+                                  {formatPrice(item.price)}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="gold"
+                                  className="flex-1"
+                                  disabled={!product || !product.inStock}
+                                  onClick={() => {
+                                    if (!product) return;
+                                    addToCart({
+                                      productId: product.id,
+                                      name: product.name,
+                                      image: product.images[0],
+                                      variant: product.variants[0],
+                                      color: product.colors[0].name,
+                                      quantity: 1,
+                                    });
+                                    toast({ title: 'Added to cart', description: product.name });
+                                  }}
+                                >
+                                  <ShoppingBag className="h-4 w-4 mr-1" />
+                                  Add to Cart
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    removeFromWishlist(item.productId);
+                                    toast({ title: 'Removed from wishlist', description: item.name });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
