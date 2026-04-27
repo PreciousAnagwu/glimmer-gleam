@@ -99,7 +99,7 @@ export function Footer() {
             </p>
             <div className="mt-6 flex gap-4">
               <a
-                href="https://instagram.com"
+                href="https://instagram.com/j.s_plug"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
@@ -108,7 +108,7 @@ export function Footer() {
                 <Instagram className="h-5 w-5" />
               </a>
               <a
-                href="https://wa.me/2348000000000"
+                href="https://wa.me/2348034231231"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -117,7 +117,7 @@ export function Footer() {
                 <MessageCircle className="h-5 w-5" />
               </a>
               <a
-                href="https://t.me/glamour"
+                href="https://t.me/J_sJewels"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telegram"
