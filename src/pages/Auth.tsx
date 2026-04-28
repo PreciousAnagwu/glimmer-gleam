@@ -78,6 +78,12 @@ const Auth: React.FC = () => {
     }
   }, [isAuthenticated, navigate, from]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) { setReferralCode(ref.toUpperCase()); setMode('signup'); }
+  }, [location.search]);
+
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
 
@@ -388,6 +394,25 @@ const Auth: React.FC = () => {
                     {errors.confirmPassword && (
                       <p className="text-sm text-destructive">{errors.confirmPassword}</p>
                     )}
+                  </div>
+                )}
+
+                {mode === 'signup' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="referral">Referral Code (optional)</Label>
+                    <div className="relative">
+                      <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="referral"
+                        type="text"
+                        placeholder="Enter a friend's code"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                        className="pl-10 font-mono uppercase"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Both of you get bonus points after your first purchase.</p>
                   </div>
                 )}
 
