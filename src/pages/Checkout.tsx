@@ -203,7 +203,7 @@ export default function Checkout() {
           status: 'pending',
           subtotal,
           shipping_fee: shippingFee,
-          discount: discountAmount,
+          discount: discountAmount + pointsDiscount,
           total,
           coupon_code: couponApplied ? couponCode.toUpperCase() : null,
           shipping_name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
@@ -212,7 +212,7 @@ export default function Checkout() {
           shipping_address: shippingInfo.address,
           shipping_city: shippingInfo.city || locationName,
           shipping_state: shippingInfo.state || locationName,
-          notes: shippingInfo.notes || null,
+          notes: [shippingInfo.notes, pointsToRedeem > 0 ? `Redeemed ${pointsToRedeem} loyalty points (₦${pointsDiscount})` : null].filter(Boolean).join(' • ') || null,
         })
         .select()
         .single();
@@ -232,6 +232,19 @@ export default function Checkout() {
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw itemsError;
+
+      // Deduct redeemed points (if any) immediately
+      if (pointsToRedeem > 0 && user) {
+        const newBalance = Math.max(0, pointsBalance - pointsToRedeem);
+        await supabase.from('loyalty_points').update({ points_balance: newBalance }).eq('user_id', user.id);
+        await supabase.from('points_transactions').insert({
+          user_id: user.id,
+          points: -pointsToRedeem,
+          type: 'redemption',
+          description: `Redeemed for ₦${pointsDiscount} off order`,
+          order_id: order.id,
+        });
+      }
 
       if (paymentMethod === 'paystack') {
         const res = await supabase.functions.invoke('initialize-paystack', {
