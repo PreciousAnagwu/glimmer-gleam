@@ -45,6 +45,27 @@ export default function Checkout() {
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Loyalty points redemption
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [pointsPerNaira, setPointsPerNaira] = useState(0.5);
+  const [minRedeem, setMinRedeem] = useState(100);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const [lpRes, sRes] = await Promise.all([
+        supabase.from('loyalty_points').select('points_balance').eq('user_id', user.id).maybeSingle(),
+        supabase.from('rewards_settings').select('points_per_naira, min_redeem_points').limit(1).maybeSingle(),
+      ]);
+      if (lpRes.data) setPointsBalance(lpRes.data.points_balance);
+      if (sRes.data) {
+        setPointsPerNaira(Number(sRes.data.points_per_naira) || 0.5);
+        setMinRedeem(sRes.data.min_redeem_points || 100);
+      }
+    })();
+  }, [user]);
+
   // Verify Paystack payment on callback
   useEffect(() => {
     const verifyRef = searchParams.get('verify');
@@ -90,7 +111,8 @@ export default function Checkout() {
   const subtotal = getTotalPrice();
   const shippingFee = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.fee || 0;
   const discountAmount = couponApplied ? Math.round(subtotal * discount) : 0;
-  const total = subtotal - discountAmount + shippingFee;
+  const pointsDiscount = Math.floor(pointsToRedeem * pointsPerNaira);
+  const total = Math.max(0, subtotal - discountAmount - pointsDiscount + shippingFee);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(price);
