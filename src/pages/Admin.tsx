@@ -45,6 +45,7 @@ interface OrderWithItems {
   shipping_state: string;
   notes: string | null;
   user_id: string;
+  is_test_order: boolean;
   order_items: {
     id: string;
     product_name: string;
@@ -128,6 +129,29 @@ export default function Admin() {
       toast({ title: 'Order updated', description: `Order status changed to ${status}.` });
       fetchOrders();
     }
+    setUpdatingOrderId(null);
+  };
+
+  const toggleTestOrder = async (orderId: string, isTest: boolean) => {
+    const { error } = await supabase.from('orders').update({ is_test_order: isTest }).eq('id', orderId);
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    else {
+      toast({ title: isTest ? 'Marked as test order' : 'Unmarked test flag' });
+      fetchOrders();
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    setUpdatingOrderId(orderId);
+    // Delete items first, then order
+    const { error: itemsErr } = await supabase.from('order_items').delete().eq('order_id', orderId);
+    if (itemsErr) {
+      toast({ title: 'Error', description: itemsErr.message, variant: 'destructive' });
+      setUpdatingOrderId(null); return;
+    }
+    const { error } = await supabase.from('orders').delete().eq('id', orderId);
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    else { toast({ title: 'Order deleted' }); fetchOrders(); }
     setUpdatingOrderId(null);
   };
 
@@ -231,6 +255,7 @@ export default function Admin() {
             <TabsTrigger value="products"><ShoppingBag className="mr-2 h-4 w-4" />Products</TabsTrigger>
             <TabsTrigger value="coupons"><Tag className="mr-2 h-4 w-4" />Coupons</TabsTrigger>
             <TabsTrigger value="qa"><MessageCircle className="mr-2 h-4 w-4" />Q&A</TabsTrigger>
+            <TabsTrigger value="newsletter"><Mail className="mr-2 h-4 w-4" />Newsletter</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders">
