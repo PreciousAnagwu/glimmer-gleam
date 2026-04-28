@@ -123,7 +123,7 @@ export default function Rewards() {
         <div className="container mx-auto px-4 max-w-4xl">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">Loyalty Rewards</h1>
-            <p className="text-muted-foreground mb-8">Earn points on every purchase and unlock exclusive rewards.</p>
+            <p className="text-muted-foreground mb-8">{settings?.page_subheading || 'Earn points on every purchase and unlock exclusive rewards.'}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
