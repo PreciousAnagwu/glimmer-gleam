@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      game_plays: {
+        Row: {
+          game_type: string
+          id: string
+          metadata: Json | null
+          played_at: string
+          points_earned: number
+          user_id: string
+        }
+        Insert: {
+          game_type: string
+          id?: string
+          metadata?: Json | null
+          played_at?: string
+          points_earned?: number
+          user_id: string
+        }
+        Update: {
+          game_type?: string
+          id?: string
+          metadata?: Json | null
+          played_at?: string
+          points_earned?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       loyalty_points: {
         Row: {
           created_at: string
@@ -107,6 +134,63 @@ export type Database = {
           referral_code?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          is_active: boolean
+          source: string
+          subscribed_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          is_active?: boolean
+          source?: string
+          subscribed_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          is_active?: boolean
+          source?: string
+          subscribed_at?: string
+        }
+        Relationships: []
+      }
+      newsletters: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          recipient_count: number
+          sent_at: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          recipient_count?: number
+          sent_at?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          recipient_count?: number
+          sent_at?: string | null
+          status?: string
+          subject?: string
         }
         Relationships: []
       }
@@ -163,6 +247,7 @@ export type Database = {
           created_at: string
           discount: number
           id: string
+          is_test_order: boolean
           notes: string | null
           payment_method: string
           payment_receipt_url: string | null
@@ -186,6 +271,7 @@ export type Database = {
           created_at?: string
           discount?: number
           id?: string
+          is_test_order?: boolean
           notes?: string | null
           payment_method: string
           payment_receipt_url?: string | null
@@ -209,6 +295,7 @@ export type Database = {
           created_at?: string
           discount?: number
           id?: string
+          is_test_order?: boolean
           notes?: string | null
           payment_method?: string
           payment_receipt_url?: string | null

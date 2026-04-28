@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { AdminProductManager } from '@/components/admin/AdminProductManager';
 import { AdminCouponManager } from '@/components/admin/AdminCouponManager';
 import { AdminQAManager } from '@/components/admin/AdminQAManager';
+import { AdminNewsletterManager } from '@/components/admin/AdminNewsletterManager';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Switch } from '@/components/ui/switch';
 
 interface OrderWithItems {
   id: string;
@@ -42,6 +45,7 @@ interface OrderWithItems {
   shipping_state: string;
   notes: string | null;
   user_id: string;
+  is_test_order: boolean;
   order_items: {
     id: string;
     product_name: string;
@@ -125,6 +129,29 @@ export default function Admin() {
       toast({ title: 'Order updated', description: `Order status changed to ${status}.` });
       fetchOrders();
     }
+    setUpdatingOrderId(null);
+  };
+
+  const toggleTestOrder = async (orderId: string, isTest: boolean) => {
+    const { error } = await supabase.from('orders').update({ is_test_order: isTest }).eq('id', orderId);
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    else {
+      toast({ title: isTest ? 'Marked as test order' : 'Unmarked test flag' });
+      fetchOrders();
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    setUpdatingOrderId(orderId);
+    // Delete items first, then order
+    const { error: itemsErr } = await supabase.from('order_items').delete().eq('order_id', orderId);
+    if (itemsErr) {
+      toast({ title: 'Error', description: itemsErr.message, variant: 'destructive' });
+      setUpdatingOrderId(null); return;
+    }
+    const { error } = await supabase.from('orders').delete().eq('id', orderId);
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    else { toast({ title: 'Order deleted' }); fetchOrders(); }
     setUpdatingOrderId(null);
   };
 
@@ -228,6 +255,7 @@ export default function Admin() {
             <TabsTrigger value="products"><ShoppingBag className="mr-2 h-4 w-4" />Products</TabsTrigger>
             <TabsTrigger value="coupons"><Tag className="mr-2 h-4 w-4" />Coupons</TabsTrigger>
             <TabsTrigger value="qa"><MessageCircle className="mr-2 h-4 w-4" />Q&A</TabsTrigger>
+            <TabsTrigger value="newsletter"><Mail className="mr-2 h-4 w-4" />Newsletter</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders">
@@ -378,6 +406,42 @@ export default function Admin() {
                                       </div>
                                     )}
                                   </div>
+                                  <Separator />
+                                  <div className="space-y-3 rounded-lg bg-muted/50 p-3">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="text-sm font-medium">Test / Building-Stage Order</p>
+                                        <p className="text-xs text-muted-foreground">Mark to allow deletion of this order.</p>
+                                      </div>
+                                      <Switch
+                                        checked={order.is_test_order}
+                                        onCheckedChange={(c) => toggleTestOrder(order.id, c)}
+                                      />
+                                    </div>
+                                    {order.is_test_order && (
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="destructive" size="sm" className="w-full" disabled={updatingOrderId === order.id}>
+                                            <Trash2 className="h-4 w-4 mr-1" /> Delete Order Permanently
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete this order?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              This will permanently remove order {order.id.slice(0, 8).toUpperCase()} and all of its items. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => deleteOrder(order.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                              Delete
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    )}
+                                  </div>
                                 </div>
                               </DialogContent>
                             </Dialog>
@@ -433,6 +497,17 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <AdminQAManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="newsletter">
+            <Card>
+              <CardHeader>
+                <CardTitle>Newsletter</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminNewsletterManager />
               </CardContent>
             </Card>
           </TabsContent>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Gift, Users, Clock, Copy, Check, Loader2, ArrowRight, Trophy } from 'lucide-react';
+import { Star, Gift, Users, Clock, Copy, Check, Loader2, ArrowRight, Trophy, Gamepad2 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { SpinWheel } from '@/components/rewards/SpinWheel';
+import { TriviaQuiz } from '@/components/rewards/TriviaQuiz';
 
 interface LoyaltyData {
   points_balance: number;
@@ -153,6 +155,18 @@ export default function Rewards() {
               </Card>
             </motion.div>
           </div>
+
+          {/* Play & Earn */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Gamepad2 className="h-5 w-5 text-gold" />
+              <h2 className="font-display text-2xl font-bold">Play & Earn</h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <SpinWheel onPointsAwarded={fetchData} />
+              <TriviaQuiz onPointsAwarded={fetchData} />
+            </div>
+          </motion.div>
 
           {/* How to earn */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>

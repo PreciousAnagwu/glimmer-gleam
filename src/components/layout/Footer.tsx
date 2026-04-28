@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Instagram, MessageCircle, Send, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const shopLinks: { label: string; to: string }[] = [
   { label: 'All Products', to: '/shop' },
@@ -40,13 +41,18 @@ export function Footer() {
       return;
     }
     setSubmitting(true);
-    // Persist locally — backend subscriber storage can be added later.
     try {
-      const stored = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
-      if (!stored.includes(email)) stored.push(email);
-      localStorage.setItem('newsletter_subscribers', JSON.stringify(stored));
-      toast({ title: 'Welcome to Glamour!', description: 'Check your inbox for your 10% off code.' });
+      const { error } = await supabase
+        .from('newsletter_subscribers')
+        .insert({ email: email.toLowerCase().trim(), source: 'footer' });
+      if (error && !error.message.includes('duplicate')) throw error;
+      toast({
+        title: 'Welcome to Glamour!',
+        description: error ? "You're already subscribed — thanks!" : 'You are now subscribed to our newsletter.',
+      });
       setEmail('');
+    } catch (err: any) {
+      toast({ title: 'Subscription failed', description: err.message, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
