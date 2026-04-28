@@ -157,7 +157,7 @@ export default function Rewards() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" />Refer & Earn</CardTitle>
-                  <CardDescription>Share your code and earn 200 points per referral!</CardDescription>
+                  <CardDescription>Share your code and earn {settings?.referral_bonus ?? 200} points per referral!</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-2">
@@ -167,12 +167,29 @@ export default function Rewards() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">
-                    When a friend signs up with your code and makes their first purchase, you both earn bonus points!
+                    When a friend signs up with your code and makes their first purchase, you both earn {settings?.referral_bonus ?? 200} bonus points!
                   </p>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
+
+          {/* Redeem hint */}
+          {settings && (loyalty?.points_balance ?? 0) >= settings.min_redeem_points && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="mb-8">
+              <Card className="border-gold bg-gold/5">
+                <CardContent className="flex items-center justify-between p-4 gap-4 flex-wrap">
+                  <div>
+                    <p className="font-medium text-sm">Ready to redeem</p>
+                    <p className="text-xs text-muted-foreground">
+                      Your {loyalty?.points_balance} points = ₦{Math.floor((loyalty?.points_balance ?? 0) * settings.points_per_naira).toLocaleString()} off your next order.
+                    </p>
+                  </div>
+                  <Button variant="gold" onClick={() => navigate('/shop')}>Shop Now</Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Play & Earn */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
@@ -190,14 +207,14 @@ export default function Rewards() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <Card className="mb-8">
               <CardHeader>
-                <CardTitle>How to Earn Points</CardTitle>
+                <CardTitle>{settings?.page_heading || 'How to Earn Points'}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-3 gap-4">
                   {[
-                    { icon: Gift, title: 'Sign Up Bonus', desc: '100 points when you join', color: 'text-green-500' },
-                    { icon: Star, title: 'Per Order', desc: '50 points per completed order', color: 'text-primary' },
-                    { icon: Users, title: 'Referrals', desc: '200 points per friend referred', color: 'text-blue-500' },
+                    { icon: Gift, title: settings?.signup_label || 'Sign Up Bonus', desc: settings?.signup_description || `${settings?.signup_bonus ?? 100} points when you join`, color: 'text-green-500' },
+                    { icon: Star, title: settings?.order_label || 'Per Order', desc: settings?.order_description || `${settings?.points_per_order ?? 50} points per completed order`, color: 'text-primary' },
+                    { icon: Users, title: settings?.referral_label || 'Referrals', desc: settings?.referral_description || `${settings?.referral_bonus ?? 200} points per friend referred`, color: 'text-blue-500' },
                   ].map((item) => (
                     <div key={item.title} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
                       <item.icon className={`h-5 w-5 mt-0.5 ${item.color}`} />
