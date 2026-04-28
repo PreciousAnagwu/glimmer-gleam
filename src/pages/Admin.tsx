@@ -406,6 +406,42 @@ export default function Admin() {
                                       </div>
                                     )}
                                   </div>
+                                  <Separator />
+                                  <div className="space-y-3 rounded-lg bg-muted/50 p-3">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="text-sm font-medium">Test / Building-Stage Order</p>
+                                        <p className="text-xs text-muted-foreground">Mark to allow deletion of this order.</p>
+                                      </div>
+                                      <Switch
+                                        checked={order.is_test_order}
+                                        onCheckedChange={(c) => toggleTestOrder(order.id, c)}
+                                      />
+                                    </div>
+                                    {order.is_test_order && (
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="destructive" size="sm" className="w-full" disabled={updatingOrderId === order.id}>
+                                            <Trash2 className="h-4 w-4 mr-1" /> Delete Order Permanently
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete this order?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              This will permanently remove order {order.id.slice(0, 8).toUpperCase()} and all of its items. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => deleteOrder(order.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                              Delete
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    )}
+                                  </div>
                                 </div>
                               </DialogContent>
                             </Dialog>
@@ -461,6 +497,17 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <AdminQAManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="newsletter">
+            <Card>
+              <CardHeader>
+                <CardTitle>Newsletter</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminNewsletterManager />
               </CardContent>
             </Card>
           </TabsContent>
