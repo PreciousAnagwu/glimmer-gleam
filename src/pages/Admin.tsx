@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { AdminProductManager } from '@/components/admin/AdminProductManager';
 import { AdminCouponManager } from '@/components/admin/AdminCouponManager';
 import { AdminQAManager } from '@/components/admin/AdminQAManager';
+import { AdminNewsletterManager } from '@/components/admin/AdminNewsletterManager';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Switch } from '@/components/ui/switch';
 
 interface OrderWithItems {
   id: string;
