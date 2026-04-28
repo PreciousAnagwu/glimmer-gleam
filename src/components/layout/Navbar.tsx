@@ -106,7 +106,7 @@ export function Navbar() {
                 Bestsellers
               </Link>
               <Link
-                to="/play-earn"
+                to="/rewards"
                 className="text-sm font-medium tracking-wide text-rose-gold transition-colors hover:text-rose-gold/80"
               >
                 Play & Earn ✨
