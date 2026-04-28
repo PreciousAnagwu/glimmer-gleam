@@ -60,6 +60,7 @@ const Auth: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string; confirmPassword?: string }>({});
@@ -145,7 +146,7 @@ const Auth: React.FC = () => {
           break;
 
         case 'signup':
-          result = await signup(email, password, name);
+          result = await signup(email, password, name, referralCode);
           if (result.success) {
             toast({
               title: 'Account created!',
