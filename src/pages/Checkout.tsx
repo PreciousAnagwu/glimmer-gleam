@@ -45,6 +45,27 @@ export default function Checkout() {
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Loyalty points redemption
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [pointsPerNaira, setPointsPerNaira] = useState(0.5);
+  const [minRedeem, setMinRedeem] = useState(100);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const [lpRes, sRes] = await Promise.all([
+        supabase.from('loyalty_points').select('points_balance').eq('user_id', user.id).maybeSingle(),
+        supabase.from('rewards_settings').select('points_per_naira, min_redeem_points').limit(1).maybeSingle(),
+      ]);
+      if (lpRes.data) setPointsBalance(lpRes.data.points_balance);
+      if (sRes.data) {
+        setPointsPerNaira(Number(sRes.data.points_per_naira) || 0.5);
+        setMinRedeem(sRes.data.min_redeem_points || 100);
+      }
+    })();
+  }, [user]);
+
   // Verify Paystack payment on callback
   useEffect(() => {
     const verifyRef = searchParams.get('verify');
@@ -90,7 +111,8 @@ export default function Checkout() {
   const subtotal = getTotalPrice();
   const shippingFee = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.fee || 0;
   const discountAmount = couponApplied ? Math.round(subtotal * discount) : 0;
-  const total = subtotal - discountAmount + shippingFee;
+  const pointsDiscount = Math.floor(pointsToRedeem * pointsPerNaira);
+  const total = Math.max(0, subtotal - discountAmount - pointsDiscount + shippingFee);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(price);
@@ -181,7 +203,7 @@ export default function Checkout() {
           status: 'pending',
           subtotal,
           shipping_fee: shippingFee,
-          discount: discountAmount,
+          discount: discountAmount + pointsDiscount,
           total,
           coupon_code: couponApplied ? couponCode.toUpperCase() : null,
           shipping_name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
@@ -190,7 +212,7 @@ export default function Checkout() {
           shipping_address: shippingInfo.address,
           shipping_city: shippingInfo.city || locationName,
           shipping_state: shippingInfo.state || locationName,
-          notes: shippingInfo.notes || null,
+          notes: [shippingInfo.notes, pointsToRedeem > 0 ? `Redeemed ${pointsToRedeem} loyalty points (₦${pointsDiscount})` : null].filter(Boolean).join(' • ') || null,
         })
         .select()
         .single();
@@ -210,6 +232,19 @@ export default function Checkout() {
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw itemsError;
+
+      // Deduct redeemed points (if any) immediately
+      if (pointsToRedeem > 0 && user) {
+        const newBalance = Math.max(0, pointsBalance - pointsToRedeem);
+        await supabase.from('loyalty_points').update({ points_balance: newBalance }).eq('user_id', user.id);
+        await supabase.from('points_transactions').insert({
+          user_id: user.id,
+          points: -pointsToRedeem,
+          type: 'redemption',
+          description: `Redeemed for ₦${pointsDiscount} off order`,
+          order_id: order.id,
+        });
+      }
 
       if (paymentMethod === 'paystack') {
         const res = await supabase.functions.invoke('initialize-paystack', {
@@ -634,6 +669,37 @@ export default function Checkout() {
                   )}
                 </div>
 
+                {/* Loyalty Points Redemption */}
+                {isAuthenticated && pointsBalance >= minRedeem && (
+                  <div className="rounded-lg border border-gold/40 bg-gold/5 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Use loyalty points</span>
+                      <span className="text-xs text-muted-foreground">{pointsBalance} available</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={Math.min(pointsBalance, Math.floor(subtotal / pointsPerNaira))}
+                        value={pointsToRedeem || ''}
+                        onChange={e => {
+                          const v = parseInt(e.target.value) || 0;
+                          const cap = Math.min(pointsBalance, Math.floor(subtotal / pointsPerNaira));
+                          setPointsToRedeem(Math.max(0, Math.min(v, cap)));
+                        }}
+                        placeholder="0"
+                        className="flex-1"
+                      />
+                      <Button variant="outline" size="sm" onClick={() => setPointsToRedeem(Math.min(pointsBalance, Math.floor(subtotal / pointsPerNaira)))}>
+                        Max
+                      </Button>
+                    </div>
+                    {pointsToRedeem > 0 && (
+                      <p className="text-xs text-gold">−{formatPrice(pointsDiscount)} off ({pointsToRedeem} pts × ₦{pointsPerNaira})</p>
+                    )}
+                  </div>
+                )}
+
                 <Separator />
 
                 <div className="space-y-2 text-sm">
@@ -645,6 +711,12 @@ export default function Checkout() {
                     <div className="flex justify-between text-gold">
                       <span>Discount ({discount * 100}%)</span>
                       <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  {pointsDiscount > 0 && (
+                    <div className="flex justify-between text-gold">
+                      <span>Points ({pointsToRedeem} pts)</span>
+                      <span>-{formatPrice(pointsDiscount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">

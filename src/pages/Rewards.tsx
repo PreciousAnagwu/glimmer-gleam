@@ -27,12 +27,26 @@ interface Transaction {
   created_at: string;
 }
 
+interface RewardsSettings {
+  signup_bonus: number;
+  points_per_order: number;
+  referral_bonus: number;
+  points_per_naira: number;
+  min_redeem_points: number;
+  page_heading: string;
+  page_subheading: string;
+  signup_label: string; signup_description: string;
+  order_label: string; order_description: string;
+  referral_label: string; referral_description: string;
+}
+
 export default function Rewards() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loyalty, setLoyalty] = useState<LoyaltyData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [settings, setSettings] = useState<RewardsSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -42,7 +56,8 @@ export default function Rewards() {
 
     const channel = supabase
       .channel('loyalty-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points', filter: `user_id=eq.${user.id}` }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'points_transactions', filter: `user_id=eq.${user.id}` }, () => fetchData())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -50,20 +65,23 @@ export default function Rewards() {
 
   const fetchData = async () => {
     if (!user) return;
-    const [lpRes, txRes] = await Promise.all([
+    const [lpRes, txRes, sRes] = await Promise.all([
       supabase.from('loyalty_points').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('points_transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      supabase.from('rewards_settings').select('*').limit(1).maybeSingle(),
     ]);
     if (lpRes.data) setLoyalty(lpRes.data);
     if (txRes.data) setTransactions(txRes.data);
+    if (sRes.data) setSettings(sRes.data as RewardsSettings);
     setLoading(false);
   };
 
   const copyReferralCode = () => {
     if (!loyalty) return;
-    navigator.clipboard.writeText(loyalty.referral_code);
+    const link = `${window.location.origin}/auth?ref=${loyalty.referral_code}`;
+    navigator.clipboard.writeText(link);
     setCopied(true);
-    toast({ title: 'Copied!', description: 'Referral code copied to clipboard.' });
+    toast({ title: 'Copied!', description: 'Referral link copied to clipboard.' });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -105,7 +123,7 @@ export default function Rewards() {
         <div className="container mx-auto px-4 max-w-4xl">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-3xl font-bold text-foreground mb-2">Loyalty Rewards</h1>
-            <p className="text-muted-foreground mb-8">Earn points on every purchase and unlock exclusive rewards.</p>
+            <p className="text-muted-foreground mb-8">{settings?.page_subheading || 'Earn points on every purchase and unlock exclusive rewards.'}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -139,7 +157,7 @@ export default function Rewards() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" />Refer & Earn</CardTitle>
-                  <CardDescription>Share your code and earn 200 points per referral!</CardDescription>
+                  <CardDescription>Share your code and earn {settings?.referral_bonus ?? 200} points per referral!</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-2">
@@ -149,12 +167,29 @@ export default function Rewards() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-3">
-                    When a friend signs up with your code and makes their first purchase, you both earn bonus points!
+                    When a friend signs up with your code and makes their first purchase, you both earn {settings?.referral_bonus ?? 200} bonus points!
                   </p>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
+
+          {/* Redeem hint */}
+          {settings && (loyalty?.points_balance ?? 0) >= settings.min_redeem_points && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="mb-8">
+              <Card className="border-gold bg-gold/5">
+                <CardContent className="flex items-center justify-between p-4 gap-4 flex-wrap">
+                  <div>
+                    <p className="font-medium text-sm">Ready to redeem</p>
+                    <p className="text-xs text-muted-foreground">
+                      Your {loyalty?.points_balance} points = ₦{Math.floor((loyalty?.points_balance ?? 0) * settings.points_per_naira).toLocaleString()} off your next order.
+                    </p>
+                  </div>
+                  <Button variant="gold" onClick={() => navigate('/shop')}>Shop Now</Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Play & Earn */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
@@ -172,14 +207,14 @@ export default function Rewards() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <Card className="mb-8">
               <CardHeader>
-                <CardTitle>How to Earn Points</CardTitle>
+                <CardTitle>{settings?.page_heading || 'How to Earn Points'}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid sm:grid-cols-3 gap-4">
                   {[
-                    { icon: Gift, title: 'Sign Up Bonus', desc: '100 points when you join', color: 'text-green-500' },
-                    { icon: Star, title: 'Per Order', desc: '50 points per completed order', color: 'text-primary' },
-                    { icon: Users, title: 'Referrals', desc: '200 points per friend referred', color: 'text-blue-500' },
+                    { icon: Gift, title: settings?.signup_label || 'Sign Up Bonus', desc: settings?.signup_description || `${settings?.signup_bonus ?? 100} points when you join`, color: 'text-green-500' },
+                    { icon: Star, title: settings?.order_label || 'Per Order', desc: settings?.order_description || `${settings?.points_per_order ?? 50} points per completed order`, color: 'text-primary' },
+                    { icon: Users, title: settings?.referral_label || 'Referrals', desc: settings?.referral_description || `${settings?.referral_bonus ?? 200} points per friend referred`, color: 'text-blue-500' },
                   ].map((item) => (
                     <div key={item.title} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/50">
                       <item.icon className={`h-5 w-5 mt-0.5 ${item.color}`} />

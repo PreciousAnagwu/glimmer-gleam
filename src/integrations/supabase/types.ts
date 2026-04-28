@@ -619,6 +619,63 @@ export type Database = {
         }
         Relationships: []
       }
+      rewards_settings: {
+        Row: {
+          id: string
+          is_singleton: boolean
+          min_redeem_points: number
+          order_description: string
+          order_label: string
+          page_heading: string
+          page_subheading: string
+          points_per_naira: number
+          points_per_order: number
+          referral_bonus: number
+          referral_description: string
+          referral_label: string
+          signup_bonus: number
+          signup_description: string
+          signup_label: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          is_singleton?: boolean
+          min_redeem_points?: number
+          order_description?: string
+          order_label?: string
+          page_heading?: string
+          page_subheading?: string
+          points_per_naira?: number
+          points_per_order?: number
+          referral_bonus?: number
+          referral_description?: string
+          referral_label?: string
+          signup_bonus?: number
+          signup_description?: string
+          signup_label?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          is_singleton?: boolean
+          min_redeem_points?: number
+          order_description?: string
+          order_label?: string
+          page_heading?: string
+          page_subheading?: string
+          points_per_naira?: number
+          points_per_order?: number
+          referral_bonus?: number
+          referral_description?: string
+          referral_label?: string
+          signup_bonus?: number
+          signup_description?: string
+          signup_label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
