@@ -27,12 +27,26 @@ interface Transaction {
   created_at: string;
 }
 
+interface RewardsSettings {
+  signup_bonus: number;
+  points_per_order: number;
+  referral_bonus: number;
+  points_per_naira: number;
+  min_redeem_points: number;
+  page_heading: string;
+  page_subheading: string;
+  signup_label: string; signup_description: string;
+  order_label: string; order_description: string;
+  referral_label: string; referral_description: string;
+}
+
 export default function Rewards() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loyalty, setLoyalty] = useState<LoyaltyData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [settings, setSettings] = useState<RewardsSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -42,7 +56,8 @@ export default function Rewards() {
 
     const channel = supabase
       .channel('loyalty-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points', filter: `user_id=eq.${user.id}` }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'points_transactions', filter: `user_id=eq.${user.id}` }, () => fetchData())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -50,20 +65,23 @@ export default function Rewards() {
 
   const fetchData = async () => {
     if (!user) return;
-    const [lpRes, txRes] = await Promise.all([
+    const [lpRes, txRes, sRes] = await Promise.all([
       supabase.from('loyalty_points').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('points_transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      supabase.from('rewards_settings').select('*').limit(1).maybeSingle(),
     ]);
     if (lpRes.data) setLoyalty(lpRes.data);
     if (txRes.data) setTransactions(txRes.data);
+    if (sRes.data) setSettings(sRes.data as RewardsSettings);
     setLoading(false);
   };
 
   const copyReferralCode = () => {
     if (!loyalty) return;
-    navigator.clipboard.writeText(loyalty.referral_code);
+    const link = `${window.location.origin}/auth?ref=${loyalty.referral_code}`;
+    navigator.clipboard.writeText(link);
     setCopied(true);
-    toast({ title: 'Copied!', description: 'Referral code copied to clipboard.' });
+    toast({ title: 'Copied!', description: 'Referral link copied to clipboard.' });
     setTimeout(() => setCopied(false), 2000);
   };
 
