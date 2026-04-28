@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2, Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import { AdminProductManager } from '@/components/admin/AdminProductManager';
 import { AdminCouponManager } from '@/components/admin/AdminCouponManager';
 import { AdminQAManager } from '@/components/admin/AdminQAManager';
 import { AdminNewsletterManager } from '@/components/admin/AdminNewsletterManager';
+import { AdminRewardsManager } from '@/components/admin/AdminRewardsManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 
@@ -256,6 +257,7 @@ export default function Admin() {
             <TabsTrigger value="coupons"><Tag className="mr-2 h-4 w-4" />Coupons</TabsTrigger>
             <TabsTrigger value="qa"><MessageCircle className="mr-2 h-4 w-4" />Q&A</TabsTrigger>
             <TabsTrigger value="newsletter"><Mail className="mr-2 h-4 w-4" />Newsletter</TabsTrigger>
+            <TabsTrigger value="rewards"><Star className="mr-2 h-4 w-4" />Rewards</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders">
@@ -508,6 +510,17 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <AdminNewsletterManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rewards">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rewards & Loyalty</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminRewardsManager />
               </CardContent>
             </Card>
           </TabsContent>
