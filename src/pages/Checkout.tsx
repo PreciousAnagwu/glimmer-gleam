@@ -669,6 +669,37 @@ export default function Checkout() {
                   )}
                 </div>
 
+                {/* Loyalty Points Redemption */}
+                {isAuthenticated && pointsBalance >= minRedeem && (
+                  <div className="rounded-lg border border-gold/40 bg-gold/5 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Use loyalty points</span>
+                      <span className="text-xs text-muted-foreground">{pointsBalance} available</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={Math.min(pointsBalance, Math.floor(subtotal / pointsPerNaira))}
+                        value={pointsToRedeem || ''}
+                        onChange={e => {
+                          const v = parseInt(e.target.value) || 0;
+                          const cap = Math.min(pointsBalance, Math.floor(subtotal / pointsPerNaira));
+                          setPointsToRedeem(Math.max(0, Math.min(v, cap)));
+                        }}
+                        placeholder="0"
+                        className="flex-1"
+                      />
+                      <Button variant="outline" size="sm" onClick={() => setPointsToRedeem(Math.min(pointsBalance, Math.floor(subtotal / pointsPerNaira)))}>
+                        Max
+                      </Button>
+                    </div>
+                    {pointsToRedeem > 0 && (
+                      <p className="text-xs text-gold">−{formatPrice(pointsDiscount)} off ({pointsToRedeem} pts × ₦{pointsPerNaira})</p>
+                    )}
+                  </div>
+                )}
+
                 <Separator />
 
                 <div className="space-y-2 text-sm">
@@ -680,6 +711,12 @@ export default function Checkout() {
                     <div className="flex justify-between text-gold">
                       <span>Discount ({discount * 100}%)</span>
                       <span>-{formatPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  {pointsDiscount > 0 && (
+                    <div className="flex justify-between text-gold">
+                      <span>Points ({pointsToRedeem} pts)</span>
+                      <span>-{formatPrice(pointsDiscount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
