@@ -106,7 +106,7 @@ export function Navbar() {
                 Bestsellers
               </Link>
               <Link
-                to="/play-earn"
+                to="/rewards"
                 className="text-sm font-medium tracking-wide text-rose-gold transition-colors hover:text-rose-gold/80"
               >
                 Play & Earn ✨
@@ -203,7 +203,7 @@ export function Navbar() {
                   Bestsellers
                 </Link>
                 <Link
-                  to="/play-earn"
+                  to="/rewards"
                   className="rounded-md px-4 py-3 text-sm font-medium text-rose-gold transition-colors hover:bg-secondary"
                   onClick={() => setIsMenuOpen(false)}
                 >
