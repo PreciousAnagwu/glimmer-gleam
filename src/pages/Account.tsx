@@ -67,6 +67,8 @@ const Account: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loyalty, setLoyalty] = useState<{ points_balance: number; lifetime_points: number; referral_code: string } | null>(null);
+  const [coupons, setCoupons] = useState<any[]>([]);
 
   // Fetch profile data
   useEffect(() => {
