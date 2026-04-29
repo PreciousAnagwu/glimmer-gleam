@@ -699,28 +699,52 @@ export default function Checkout() {
 
                 <Separator />
 
-                <div>
+                <div className="space-y-2">
                   {couponApplied ? (
                     <div className="flex items-center justify-between rounded-lg bg-gold/10 p-3">
                       <div className="flex items-center gap-2">
                         <Tag className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium">{couponCode.toUpperCase()}</span>
-                        <span className="text-sm text-gold">-{discount * 100}%</span>
+                        <span className="text-sm text-gold">
+                          {couponDiscountType === 'percentage'
+                            ? `-${couponDiscountValue}%`
+                            : `-${formatPrice(couponDiscountValue)}`}
+                        </span>
                       </div>
                       <button onClick={removeCoupon}><X className="h-4 w-4 text-muted-foreground" /></button>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Coupon code"
-                        value={couponCode}
-                        onChange={e => setCouponCode(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button variant="outline" onClick={handleApplyCoupon} disabled={!couponCode.trim()}>
-                        Apply
-                      </Button>
-                    </div>
+                    <>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Coupon code"
+                          value={couponCode}
+                          onChange={e => setCouponCode(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button variant="outline" onClick={handleApplyCoupon} disabled={!couponCode.trim() || applyingCoupon}>
+                          {applyingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                        </Button>
+                      </div>
+                      {availableCoupons.length > 0 && (
+                        <div className="rounded-md border border-dashed border-gold/40 bg-gold/5 p-2">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Available codes</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {availableCoupons.slice(0, 4).map((c) => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setCouponCode(c.code)}
+                                className="rounded bg-background px-2 py-1 text-xs font-mono font-semibold text-gold border border-gold/30 hover:bg-gold/10 transition-colors"
+                                title={c.discount_type === 'percentage' ? `${c.discount_value}% off` : `${formatPrice(Number(c.discount_value))} off`}
+                              >
+                                {c.code}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
