@@ -47,7 +47,7 @@ export function Footer() {
         .insert({ email: email.toLowerCase().trim(), source: 'footer' });
       if (error && !error.message.includes('duplicate')) throw error;
       toast({
-        title: 'Welcome to Glamour!',
+        title: "Welcome to J's Jewels!",
         description: error ? "You're already subscribed — thanks!" : 'You are now subscribed to our newsletter.',
       });
       setEmail('');
@@ -65,7 +65,7 @@ export function Footer() {
         <div className="container mx-auto px-4 py-12">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="font-display text-2xl font-semibold text-foreground md:text-3xl">
-              Join the Glamour Family
+              Join the J's Jewels Family
             </h3>
             <p className="mt-3 text-muted-foreground">
               Subscribe for exclusive offers, early access to new collections, and 10% off your first order.
@@ -94,10 +94,10 @@ export function Footer() {
           <div>
             <Link to="/" className="inline-block">
               <span className="font-display text-2xl font-bold tracking-wide text-foreground">
-                GLAMOUR
+                J's
               </span>
               <span className="ml-1 font-display text-lg font-light tracking-widest text-gold">
-                & Co.
+                JEWELS
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">

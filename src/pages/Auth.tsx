@@ -212,7 +212,7 @@ const Auth: React.FC = () => {
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           <Link to="/" className="flex items-center gap-2 mb-12">
             <Sparkles className="h-8 w-8 text-primary" />
-            <span className="font-display text-3xl font-bold text-foreground">LUMIÈRE</span>
+            <span className="font-display text-3xl font-bold text-foreground">J'S JEWELS</span>
           </Link>
           
           <motion.div
@@ -256,7 +256,7 @@ const Auth: React.FC = () => {
           {/* Mobile Logo */}
           <Link to="/" className="flex lg:hidden items-center gap-2 mb-8 justify-center">
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-display text-2xl font-bold text-foreground">LUMIÈRE</span>
+            <span className="font-display text-2xl font-bold text-foreground">J'S JEWELS</span>
           </Link>
 
           <AnimatePresence mode="wait">

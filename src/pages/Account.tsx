@@ -67,6 +67,8 @@ const Account: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loyalty, setLoyalty] = useState<{ points_balance: number; lifetime_points: number; referral_code: string } | null>(null);
+  const [coupons, setCoupons] = useState<any[]>([]);
 
   // Fetch profile data
   useEffect(() => {
@@ -157,10 +159,40 @@ const Account: React.FC = () => {
     { id: 3, title: 'Reward Earned', message: 'You earned 500 points from your last purchase.', time: '3 days ago', read: true },
   ];
 
-  const coupons = [
-    { code: 'WELCOME10', discount: '10%', expiry: '2024-02-28', minOrder: 50000 },
-    { code: 'LOYAL20', discount: '₦5,000', expiry: '2024-03-15', minOrder: 100000 },
-  ];
+  // Fetch live loyalty + active published coupons
+  useEffect(() => {
+    (async () => {
+      const nowIso = new Date().toISOString();
+      const { data: cps } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .order('created_at', { ascending: false });
+      setCoupons(cps || []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let channel: any;
+    (async () => {
+      const { data } = await supabase
+        .from('loyalty_points')
+        .select('points_balance, lifetime_points, referral_code')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setLoyalty(data);
+      // Realtime updates so points reflect immediately
+      channel = supabase
+        .channel('account-loyalty')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points', filter: `user_id=eq.${user.id}` }, (payload: any) => {
+          if (payload.new) setLoyalty(payload.new);
+        })
+        .subscribe();
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -266,12 +298,27 @@ const Account: React.FC = () => {
                       <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
                         <Star className="h-10 w-10 text-primary" />
                       </div>
-                      <h3 className="font-display text-2xl font-bold text-foreground">Gold Member</h3>
-                      <p className="text-muted-foreground mb-4">2,500 Points</p>
-                      <div className="w-full bg-muted rounded-full h-2 mb-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '65%' }} />
-                      </div>
-                      <p className="text-sm text-muted-foreground">1,500 points until Platinum</p>
+                      <h3 className="font-display text-2xl font-bold text-foreground">
+                        {(loyalty?.lifetime_points ?? 0) >= 5000 ? 'Platinum Member' : (loyalty?.lifetime_points ?? 0) >= 2000 ? 'Gold Member' : (loyalty?.lifetime_points ?? 0) >= 500 ? 'Silver Member' : 'Bronze Member'}
+                      </h3>
+                      <p className="text-muted-foreground mb-1">{(loyalty?.points_balance ?? 0).toLocaleString()} Points Available</p>
+                      <p className="text-xs text-muted-foreground mb-4">Lifetime: {(loyalty?.lifetime_points ?? 0).toLocaleString()}</p>
+                      {(() => {
+                        const lp = loyalty?.lifetime_points ?? 0;
+                        const next = lp >= 5000 ? null : lp >= 2000 ? 5000 : lp >= 500 ? 2000 : 500;
+                        const prev = lp >= 5000 ? 5000 : lp >= 2000 ? 2000 : lp >= 500 ? 500 : 0;
+                        if (!next) return <p className="text-sm text-primary font-medium">You've reached the top tier ✨</p>;
+                        const pct = Math.min(100, Math.round(((lp - prev) / (next - prev)) * 100));
+                        return (
+                          <>
+                            <div className="w-full bg-muted rounded-full h-2 mb-2">
+                              <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                            </div>
+                            <p className="text-sm text-muted-foreground">{(next - lp).toLocaleString()} points to next tier</p>
+                          </>
+                        );
+                      })()}
+                      <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/rewards')}>View Rewards</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -445,20 +492,48 @@ const Account: React.FC = () => {
                   <CardDescription>Available discount codes</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {coupons.map((coupon) => (
-                      <div key={coupon.code} className="relative overflow-hidden border-2 border-dashed border-primary/30 rounded-lg p-4 bg-primary/5">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full" />
-                        <Gift className="absolute top-2 right-2 h-6 w-6 text-primary/50" />
-                        <div className="relative">
-                          <p className="font-mono text-lg font-bold text-primary">{coupon.code}</p>
-                          <p className="text-2xl font-bold text-foreground mt-1">{coupon.discount} OFF</p>
-                          <p className="text-sm text-muted-foreground mt-2">Min. order: {formatPrice(coupon.minOrder)}</p>
-                          <p className="text-xs text-muted-foreground">Expires: {new Date(coupon.expiry).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {coupons.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Gift className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                      <h3 className="font-medium text-foreground mb-1">No discount codes available</h3>
+                      <p className="text-sm text-muted-foreground">Check back soon for exclusive offers.</p>
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {coupons.map((coupon) => {
+                        const discountLabel = coupon.discount_type === 'percentage'
+                          ? `${coupon.discount_value}%`
+                          : formatPrice(Number(coupon.discount_value));
+                        return (
+                          <div key={coupon.id} className="relative overflow-hidden border-2 border-dashed border-primary/30 rounded-lg p-4 bg-primary/5">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full" />
+                            <Gift className="absolute top-2 right-2 h-6 w-6 text-primary/50" />
+                            <div className="relative">
+                              <p className="font-mono text-lg font-bold text-primary">{coupon.code}</p>
+                              <p className="text-2xl font-bold text-foreground mt-1">{discountLabel} OFF</p>
+                              {Number(coupon.min_order_amount) > 0 && (
+                                <p className="text-sm text-muted-foreground mt-2">Min. order: {formatPrice(Number(coupon.min_order_amount))}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                {coupon.expires_at ? `Expires: ${new Date(coupon.expires_at).toLocaleDateString()}` : 'No expiry'}
+                              </p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-3 w-full"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(coupon.code);
+                                  toast({ title: 'Code copied', description: `${coupon.code} copied. Use it at checkout.` });
+                                }}
+                              >
+                                Copy Code
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

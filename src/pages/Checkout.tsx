@@ -37,7 +37,11 @@ export default function Checkout() {
   const [selectedLocation, setSelectedLocation] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
-  const [discount, setDiscount] = useState(0);
+  const [couponId, setCouponId] = useState<string | null>(null);
+  const [couponDiscountType, setCouponDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [couponDiscountValue, setCouponDiscountValue] = useState(0);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -110,32 +114,83 @@ export default function Checkout() {
 
   const subtotal = getTotalPrice();
   const shippingFee = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.fee || 0;
-  const discountAmount = couponApplied ? Math.round(subtotal * discount) : 0;
+  const discountAmount = couponApplied
+    ? (couponDiscountType === 'percentage'
+        ? Math.round(subtotal * (couponDiscountValue / 100))
+        : Math.min(couponDiscountValue, subtotal))
+    : 0;
   const pointsDiscount = Math.floor(pointsToRedeem * pointsPerNaira);
   const total = Math.max(0, subtotal - discountAmount - pointsDiscount + shippingFee);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(price);
 
-  const handleApplyCoupon = () => {
+  // Load published, currently-valid coupons
+  useEffect(() => {
+    (async () => {
+      const nowIso = new Date().toISOString();
+      const { data } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .order('created_at', { ascending: false });
+      setAvailableCoupons(data || []);
+    })();
+  }, []);
+
+  const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
-    if (code === 'GLAMOUR15') {
-      setDiscount(0.15);
+    if (!code) return;
+    setApplyingCoupon(true);
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .ilike('code', code)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error || !data) {
+        toast({ title: 'Invalid coupon', description: 'This coupon code is not valid.', variant: 'destructive' });
+        return;
+      }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        toast({ title: 'Coupon expired', description: 'This coupon is no longer valid.', variant: 'destructive' });
+        return;
+      }
+      if (data.max_uses != null && data.current_uses >= data.max_uses) {
+        toast({ title: 'Coupon exhausted', description: 'This coupon has reached its usage limit.', variant: 'destructive' });
+        return;
+      }
+      if (data.min_order_amount && subtotal < Number(data.min_order_amount)) {
+        toast({
+          title: 'Minimum order not met',
+          description: `Add ${formatPrice(Number(data.min_order_amount) - subtotal)} more to use this code.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setCouponId(data.id);
+      setCouponCode(data.code);
+      setCouponDiscountType(data.discount_type as 'percentage' | 'fixed');
+      setCouponDiscountValue(Number(data.discount_value));
       setCouponApplied(true);
-      toast({ title: 'Coupon applied!', description: '15% discount applied to your order.' });
-    } else if (code === 'WELCOME10') {
-      setDiscount(0.10);
-      setCouponApplied(true);
-      toast({ title: 'Coupon applied!', description: '10% discount applied to your order.' });
-    } else {
-      toast({ title: 'Invalid coupon', description: 'This coupon code is not valid.', variant: 'destructive' });
+      const desc = data.discount_type === 'percentage'
+        ? `${data.discount_value}% off your order.`
+        : `${formatPrice(Number(data.discount_value))} off your order.`;
+      toast({ title: 'Coupon applied!', description: desc });
+    } finally {
+      setApplyingCoupon(false);
     }
   };
 
   const removeCoupon = () => {
     setCouponCode('');
     setCouponApplied(false);
-    setDiscount(0);
+    setCouponId(null);
+    setCouponDiscountValue(0);
   };
 
   const handleReceiptSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,6 +299,14 @@ export default function Checkout() {
           description: `Redeemed for ₦${pointsDiscount} off order`,
           order_id: order.id,
         });
+      }
+
+      // Increment coupon usage so admin sees real usage and max_uses applies
+      if (couponApplied && couponId) {
+        const { data: cur } = await supabase.from('coupons').select('current_uses').eq('id', couponId).maybeSingle();
+        if (cur) {
+          await supabase.from('coupons').update({ current_uses: (cur.current_uses || 0) + 1 }).eq('id', couponId);
+        }
       }
 
       if (paymentMethod === 'paystack') {
@@ -494,7 +557,7 @@ export default function Checkout() {
                         <h3 className="mb-2 font-semibold">Bank Account Details</h3>
                         <div className="space-y-1 text-sm">
                           <p><span className="text-muted-foreground">Bank:</span> <span className="font-medium">GTBank</span></p>
-                          <p><span className="text-muted-foreground">Account Name:</span> <span className="font-medium">Glamour & Co. Ltd</span></p>
+                          <p><span className="text-muted-foreground">Account Name:</span> <span className="font-medium">J's Jewels Ltd</span></p>
                           <p><span className="text-muted-foreground">Account Number:</span> <span className="font-medium">0123456789</span></p>
                         </div>
                         <div className="mt-4 space-y-2">
@@ -644,28 +707,52 @@ export default function Checkout() {
 
                 <Separator />
 
-                <div>
+                <div className="space-y-2">
                   {couponApplied ? (
                     <div className="flex items-center justify-between rounded-lg bg-gold/10 p-3">
                       <div className="flex items-center gap-2">
                         <Tag className="h-4 w-4 text-gold" />
                         <span className="text-sm font-medium">{couponCode.toUpperCase()}</span>
-                        <span className="text-sm text-gold">-{discount * 100}%</span>
+                        <span className="text-sm text-gold">
+                          {couponDiscountType === 'percentage'
+                            ? `-${couponDiscountValue}%`
+                            : `-${formatPrice(couponDiscountValue)}`}
+                        </span>
                       </div>
                       <button onClick={removeCoupon}><X className="h-4 w-4 text-muted-foreground" /></button>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Coupon code"
-                        value={couponCode}
-                        onChange={e => setCouponCode(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button variant="outline" onClick={handleApplyCoupon} disabled={!couponCode.trim()}>
-                        Apply
-                      </Button>
-                    </div>
+                    <>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Coupon code"
+                          value={couponCode}
+                          onChange={e => setCouponCode(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button variant="outline" onClick={handleApplyCoupon} disabled={!couponCode.trim() || applyingCoupon}>
+                          {applyingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                        </Button>
+                      </div>
+                      {availableCoupons.length > 0 && (
+                        <div className="rounded-md border border-dashed border-gold/40 bg-gold/5 p-2">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Available codes</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {availableCoupons.slice(0, 4).map((c) => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setCouponCode(c.code)}
+                                className="rounded bg-background px-2 py-1 text-xs font-mono font-semibold text-gold border border-gold/30 hover:bg-gold/10 transition-colors"
+                                title={c.discount_type === 'percentage' ? `${c.discount_value}% off` : `${formatPrice(Number(c.discount_value))} off`}
+                              >
+                                {c.code}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -709,7 +796,7 @@ export default function Checkout() {
                   </div>
                   {couponApplied && (
                     <div className="flex justify-between text-gold">
-                      <span>Discount ({discount * 100}%)</span>
+                      <span>Discount {couponDiscountType === 'percentage' ? `(${couponDiscountValue}%)` : ''}</span>
                       <span>-{formatPrice(discountAmount)}</span>
                     </div>
                   )}
