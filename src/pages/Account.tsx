@@ -492,20 +492,48 @@ const Account: React.FC = () => {
                   <CardDescription>Available discount codes</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {coupons.map((coupon) => (
-                      <div key={coupon.code} className="relative overflow-hidden border-2 border-dashed border-primary/30 rounded-lg p-4 bg-primary/5">
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full" />
-                        <Gift className="absolute top-2 right-2 h-6 w-6 text-primary/50" />
-                        <div className="relative">
-                          <p className="font-mono text-lg font-bold text-primary">{coupon.code}</p>
-                          <p className="text-2xl font-bold text-foreground mt-1">{coupon.discount} OFF</p>
-                          <p className="text-sm text-muted-foreground mt-2">Min. order: {formatPrice(coupon.minOrder)}</p>
-                          <p className="text-xs text-muted-foreground">Expires: {new Date(coupon.expiry).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {coupons.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Gift className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+                      <h3 className="font-medium text-foreground mb-1">No discount codes available</h3>
+                      <p className="text-sm text-muted-foreground">Check back soon for exclusive offers.</p>
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {coupons.map((coupon) => {
+                        const discountLabel = coupon.discount_type === 'percentage'
+                          ? `${coupon.discount_value}%`
+                          : formatPrice(Number(coupon.discount_value));
+                        return (
+                          <div key={coupon.id} className="relative overflow-hidden border-2 border-dashed border-primary/30 rounded-lg p-4 bg-primary/5">
+                            <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full" />
+                            <Gift className="absolute top-2 right-2 h-6 w-6 text-primary/50" />
+                            <div className="relative">
+                              <p className="font-mono text-lg font-bold text-primary">{coupon.code}</p>
+                              <p className="text-2xl font-bold text-foreground mt-1">{discountLabel} OFF</p>
+                              {Number(coupon.min_order_amount) > 0 && (
+                                <p className="text-sm text-muted-foreground mt-2">Min. order: {formatPrice(Number(coupon.min_order_amount))}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                {coupon.expires_at ? `Expires: ${new Date(coupon.expires_at).toLocaleDateString()}` : 'No expiry'}
+                              </p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-3 w-full"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(coupon.code);
+                                  toast({ title: 'Code copied', description: `${coupon.code} copied. Use it at checkout.` });
+                                }}
+                              >
+                                Copy Code
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
