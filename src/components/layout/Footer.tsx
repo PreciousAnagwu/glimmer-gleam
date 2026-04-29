@@ -65,7 +65,7 @@ export function Footer() {
         <div className="container mx-auto px-4 py-12">
           <div className="mx-auto max-w-2xl text-center">
             <h3 className="font-display text-2xl font-semibold text-foreground md:text-3xl">
-              Join the Glamour Family
+              Join the J's Jewels Family
             </h3>
             <p className="mt-3 text-muted-foreground">
               Subscribe for exclusive offers, early access to new collections, and 10% off your first order.
