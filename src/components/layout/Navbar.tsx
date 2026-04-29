@@ -32,7 +32,7 @@ export function Navbar() {
       {/* Announcement Bar */}
       <div className="bg-gradient-gold py-2 text-center">
         <p className="text-xs font-medium tracking-wider text-primary-foreground">
-          FREE SHIPPING ON ORDERS OVER ₦50,000 | USE CODE: GLAMOUR15 FOR 15% OFF
+          FREE SHIPPING ON ORDERS OVER ₦50,000 | USE CODE: JSJEWELS15 FOR 15% OFF
         </p>
       </div>
 
@@ -53,10 +53,10 @@ export function Navbar() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <span className="font-display text-2xl font-bold tracking-wide text-foreground lg:text-3xl">
-                GLAMOUR
+                J's
               </span>
-              <span className="hidden font-display text-lg font-light tracking-widest text-gold sm:inline">
-                & Co.
+              <span className="font-display text-lg font-light tracking-widest text-gold sm:text-xl">
+                JEWELS
               </span>
             </Link>
 
