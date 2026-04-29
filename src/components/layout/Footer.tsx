@@ -94,10 +94,10 @@ export function Footer() {
           <div>
             <Link to="/" className="inline-block">
               <span className="font-display text-2xl font-bold tracking-wide text-foreground">
-                GLAMOUR
+                J's
               </span>
               <span className="ml-1 font-display text-lg font-light tracking-widest text-gold">
-                & Co.
+                JEWELS
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">
