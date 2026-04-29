@@ -45,7 +45,7 @@ export function TestimonialsSection() {
             What Our Customers Say
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Join thousands of satisfied customers who trust Glamour & Co. for their jewelry needs
+            Join thousands of satisfied customers who trust J's Jewels for their jewelry needs
           </p>
         </motion.div>
 
