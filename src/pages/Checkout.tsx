@@ -114,32 +114,83 @@ export default function Checkout() {
 
   const subtotal = getTotalPrice();
   const shippingFee = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.fee || 0;
-  const discountAmount = couponApplied ? Math.round(subtotal * discount) : 0;
+  const discountAmount = couponApplied
+    ? (couponDiscountType === 'percentage'
+        ? Math.round(subtotal * (couponDiscountValue / 100))
+        : Math.min(couponDiscountValue, subtotal))
+    : 0;
   const pointsDiscount = Math.floor(pointsToRedeem * pointsPerNaira);
   const total = Math.max(0, subtotal - discountAmount - pointsDiscount + shippingFee);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(price);
 
-  const handleApplyCoupon = () => {
+  // Load published, currently-valid coupons
+  useEffect(() => {
+    (async () => {
+      const nowIso = new Date().toISOString();
+      const { data } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .order('created_at', { ascending: false });
+      setAvailableCoupons(data || []);
+    })();
+  }, []);
+
+  const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
-    if (code === 'GLAMOUR15') {
-      setDiscount(0.15);
+    if (!code) return;
+    setApplyingCoupon(true);
+    try {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .ilike('code', code)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error || !data) {
+        toast({ title: 'Invalid coupon', description: 'This coupon code is not valid.', variant: 'destructive' });
+        return;
+      }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        toast({ title: 'Coupon expired', description: 'This coupon is no longer valid.', variant: 'destructive' });
+        return;
+      }
+      if (data.max_uses != null && data.current_uses >= data.max_uses) {
+        toast({ title: 'Coupon exhausted', description: 'This coupon has reached its usage limit.', variant: 'destructive' });
+        return;
+      }
+      if (data.min_order_amount && subtotal < Number(data.min_order_amount)) {
+        toast({
+          title: 'Minimum order not met',
+          description: `Add ${formatPrice(Number(data.min_order_amount) - subtotal)} more to use this code.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setCouponId(data.id);
+      setCouponCode(data.code);
+      setCouponDiscountType(data.discount_type as 'percentage' | 'fixed');
+      setCouponDiscountValue(Number(data.discount_value));
       setCouponApplied(true);
-      toast({ title: 'Coupon applied!', description: '15% discount applied to your order.' });
-    } else if (code === 'WELCOME10') {
-      setDiscount(0.10);
-      setCouponApplied(true);
-      toast({ title: 'Coupon applied!', description: '10% discount applied to your order.' });
-    } else {
-      toast({ title: 'Invalid coupon', description: 'This coupon code is not valid.', variant: 'destructive' });
+      const desc = data.discount_type === 'percentage'
+        ? `${data.discount_value}% off your order.`
+        : `${formatPrice(Number(data.discount_value))} off your order.`;
+      toast({ title: 'Coupon applied!', description: desc });
+    } finally {
+      setApplyingCoupon(false);
     }
   };
 
   const removeCoupon = () => {
     setCouponCode('');
     setCouponApplied(false);
-    setDiscount(0);
+    setCouponId(null);
+    setCouponDiscountValue(0);
   };
 
   const handleReceiptSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
