@@ -8,7 +8,7 @@ const testimonials = [
     role: 'Fashion Blogger',
     image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
     content:
-      'The quality of Glamour & Co. jewelry is absolutely stunning. Every piece I\'ve purchased has become a staple in my collection.',
+      "The quality of J's Jewels jewelry is absolutely stunning. Every piece I've purchased has become a staple in my collection.",
     rating: 5,
   },
   {
@@ -17,7 +17,7 @@ const testimonials = [
     role: 'Business Executive',
     image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
     content:
-      'From engagement rings to everyday accessories, Glamour has never disappointed. The attention to detail is remarkable.',
+      "From engagement rings to everyday accessories, J's Jewels has never disappointed. The attention to detail is remarkable.",
     rating: 5,
   },
   {
@@ -26,7 +26,7 @@ const testimonials = [
     role: 'Wedding Planner',
     image: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150',
     content:
-      'I recommend Glamour & Co. to all my brides. Their bridal sets are breathtaking and the customer service is exceptional.',
+      "I recommend J's Jewels to all my brides. Their bridal sets are breathtaking and the customer service is exceptional.",
     rating: 5,
   },
 ];
