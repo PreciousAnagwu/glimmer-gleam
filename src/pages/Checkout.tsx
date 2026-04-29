@@ -494,7 +494,7 @@ export default function Checkout() {
                         <h3 className="mb-2 font-semibold">Bank Account Details</h3>
                         <div className="space-y-1 text-sm">
                           <p><span className="text-muted-foreground">Bank:</span> <span className="font-medium">GTBank</span></p>
-                          <p><span className="text-muted-foreground">Account Name:</span> <span className="font-medium">Glamour & Co. Ltd</span></p>
+                          <p><span className="text-muted-foreground">Account Name:</span> <span className="font-medium">J's Jewels Ltd</span></p>
                           <p><span className="text-muted-foreground">Account Number:</span> <span className="font-medium">0123456789</span></p>
                         </div>
                         <div className="mt-4 space-y-2">
