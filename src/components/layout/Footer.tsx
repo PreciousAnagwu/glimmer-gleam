@@ -47,7 +47,7 @@ export function Footer() {
         .insert({ email: email.toLowerCase().trim(), source: 'footer' });
       if (error && !error.message.includes('duplicate')) throw error;
       toast({
-        title: 'Welcome to Glamour!',
+        title: "Welcome to J's Jewels!",
         description: error ? "You're already subscribed — thanks!" : 'You are now subscribed to our newsletter.',
       });
       setEmail('');
