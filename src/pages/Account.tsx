@@ -298,12 +298,27 @@ const Account: React.FC = () => {
                       <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
                         <Star className="h-10 w-10 text-primary" />
                       </div>
-                      <h3 className="font-display text-2xl font-bold text-foreground">Gold Member</h3>
-                      <p className="text-muted-foreground mb-4">2,500 Points</p>
-                      <div className="w-full bg-muted rounded-full h-2 mb-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '65%' }} />
-                      </div>
-                      <p className="text-sm text-muted-foreground">1,500 points until Platinum</p>
+                      <h3 className="font-display text-2xl font-bold text-foreground">
+                        {(loyalty?.lifetime_points ?? 0) >= 5000 ? 'Platinum Member' : (loyalty?.lifetime_points ?? 0) >= 2000 ? 'Gold Member' : (loyalty?.lifetime_points ?? 0) >= 500 ? 'Silver Member' : 'Bronze Member'}
+                      </h3>
+                      <p className="text-muted-foreground mb-1">{(loyalty?.points_balance ?? 0).toLocaleString()} Points Available</p>
+                      <p className="text-xs text-muted-foreground mb-4">Lifetime: {(loyalty?.lifetime_points ?? 0).toLocaleString()}</p>
+                      {(() => {
+                        const lp = loyalty?.lifetime_points ?? 0;
+                        const next = lp >= 5000 ? null : lp >= 2000 ? 5000 : lp >= 500 ? 2000 : 500;
+                        const prev = lp >= 5000 ? 5000 : lp >= 2000 ? 2000 : lp >= 500 ? 500 : 0;
+                        if (!next) return <p className="text-sm text-primary font-medium">You've reached the top tier ✨</p>;
+                        const pct = Math.min(100, Math.round(((lp - prev) / (next - prev)) * 100));
+                        return (
+                          <>
+                            <div className="w-full bg-muted rounded-full h-2 mb-2">
+                              <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                            </div>
+                            <p className="text-sm text-muted-foreground">{(next - lp).toLocaleString()} points to next tier</p>
+                          </>
+                        );
+                      })()}
+                      <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/rewards')}>View Rewards</Button>
                     </div>
                   </CardContent>
                 </Card>
