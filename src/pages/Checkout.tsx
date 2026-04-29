@@ -37,7 +37,11 @@ export default function Checkout() {
   const [selectedLocation, setSelectedLocation] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
-  const [discount, setDiscount] = useState(0);
+  const [couponId, setCouponId] = useState<string | null>(null);
+  const [couponDiscountType, setCouponDiscountType] = useState<'percentage' | 'fixed'>('percentage');
+  const [couponDiscountValue, setCouponDiscountValue] = useState(0);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
