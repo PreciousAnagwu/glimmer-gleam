@@ -301,6 +301,14 @@ export default function Checkout() {
         });
       }
 
+      // Increment coupon usage so admin sees real usage and max_uses applies
+      if (couponApplied && couponId) {
+        const { data: cur } = await supabase.from('coupons').select('current_uses').eq('id', couponId).maybeSingle();
+        if (cur) {
+          await supabase.from('coupons').update({ current_uses: (cur.current_uses || 0) + 1 }).eq('id', couponId);
+        }
+      }
+
       if (paymentMethod === 'paystack') {
         const res = await supabase.functions.invoke('initialize-paystack', {
           body: {
