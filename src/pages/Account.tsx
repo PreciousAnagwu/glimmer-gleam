@@ -159,10 +159,40 @@ const Account: React.FC = () => {
     { id: 3, title: 'Reward Earned', message: 'You earned 500 points from your last purchase.', time: '3 days ago', read: true },
   ];
 
-  const coupons = [
-    { code: 'WELCOME10', discount: '10%', expiry: '2024-02-28', minOrder: 50000 },
-    { code: 'LOYAL20', discount: '₦5,000', expiry: '2024-03-15', minOrder: 100000 },
-  ];
+  // Fetch live loyalty + active published coupons
+  useEffect(() => {
+    (async () => {
+      const nowIso = new Date().toISOString();
+      const { data: cps } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .order('created_at', { ascending: false });
+      setCoupons(cps || []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let channel: any;
+    (async () => {
+      const { data } = await supabase
+        .from('loyalty_points')
+        .select('points_balance, lifetime_points, referral_code')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setLoyalty(data);
+      // Realtime updates so points reflect immediately
+      channel = supabase
+        .channel('account-loyalty')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points', filter: `user_id=eq.${user.id}` }, (payload: any) => {
+          if (payload.new) setLoyalty(payload.new);
+        })
+        .subscribe();
+    })();
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background">
