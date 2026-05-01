@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartStore } from '@/store/cartStore';
 import { useProducts } from '@/hooks/useProducts';
-import { Trash2, ShoppingBag, Gift } from 'lucide-react';
+import { Trash2, ShoppingBag } from 'lucide-react';
 import { GiftWishlistDialog } from '@/components/wishlist/GiftWishlistDialog';
 import { 
   User, 
@@ -55,6 +55,7 @@ const Account: React.FC = () => {
   const removeFromWishlist = useWishlistStore((s) => s.removeItem);
   const addToCart = useCartStore((s) => s.addItem);
   const { getProductById } = useProducts();
+  const [giftDialogOpen, setGiftDialogOpen] = useState(false);
 
   const tabParam = searchParams.get('tab') || 'profile';
   const [isEditingProfile, setIsEditingProfile] = useState(false);
