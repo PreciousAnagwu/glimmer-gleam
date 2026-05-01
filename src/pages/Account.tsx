@@ -576,6 +576,7 @@ const Account: React.FC = () => {
       </main>
 
       <Footer />
+      <GiftWishlistDialog open={giftDialogOpen} onOpenChange={setGiftDialogOpen} />
     </div>
   );
 };
