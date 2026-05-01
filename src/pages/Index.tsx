@@ -9,10 +9,19 @@ import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { BrandsSection } from '@/components/home/BrandsSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { CTASection } from '@/components/home/CTASection';
+import { SEO } from '@/components/SEO';
 
 const Index = () => {
+  const orgJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Store',
+    name: "J's Jewels",
+    description: "Handcrafted luxury jewelry and accessories.",
+    url: typeof window !== 'undefined' ? window.location.origin : 'https://jsjewels.com',
+  };
   return (
     <div className="min-h-screen bg-background">
+      <SEO jsonLd={orgJsonLd} />
       <Navbar />
       <main>
         <HeroSection />
