@@ -14,7 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartStore } from '@/store/cartStore';
 import { useProducts } from '@/hooks/useProducts';
-import { Trash2, ShoppingBag } from 'lucide-react';
+import { Trash2, ShoppingBag, Gift } from 'lucide-react';
+import { GiftWishlistDialog } from '@/components/wishlist/GiftWishlistDialog';
 import { 
   User, 
   Package, 
@@ -385,14 +386,9 @@ const Account: React.FC = () => {
                     <CardDescription>Items you've saved for later</CardDescription>
                   </div>
                   {wishlistItems.length > 0 && (
-                    <Button variant="outline" size="sm" onClick={() => {
-                      const ids = wishlistItems.map((i) => i.productId);
-                      const payload = encodeURIComponent(btoa(JSON.stringify(ids)));
-                      const url = `${window.location.origin}/wishlist/share/${payload}`;
-                      navigator.clipboard.writeText(url).then(() => {
-                        toast({ title: 'Link copied!', description: 'Share your wishlist with friends 💝' });
-                      });
-                    }}>Share wishlist</Button>
+                    <Button variant="gold" size="sm" onClick={() => setGiftDialogOpen(true)}>
+                      <Gift className="mr-1 h-4 w-4" /> Send as Gift
+                    </Button>
                   )}
                 </CardHeader>
                 <CardContent>
