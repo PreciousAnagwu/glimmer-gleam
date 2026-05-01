@@ -14,6 +14,8 @@ import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductQA } from '@/components/products/ProductQA';
+import { ProductReviews } from '@/components/products/ProductReviews';
+import { SEO } from '@/components/SEO';
 import { toast } from '@/hooks/use-toast';
 
 export default function ProductDetail() {
@@ -92,8 +94,27 @@ export default function ProductDetail() {
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
+  const productJsonLd = {
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: product.name,
+    image: product.images,
+    description: product.description,
+    sku: product.id,
+    brand: { '@type': 'Brand', name: "J's Jewels" },
+    aggregateRating: product.reviews > 0 ? {
+      '@type': 'AggregateRating', ratingValue: product.rating, reviewCount: product.reviews,
+    } : undefined,
+    offers: {
+      '@type': 'Offer', priceCurrency: 'NGN',
+      price: product.variants[selectedVariant].price,
+      availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO title={product.name} description={product.description} image={product.images[0]} type="product" jsonLd={productJsonLd} />
       <Navbar />
       <main className="py-8">
         <div className="container mx-auto px-4">
@@ -246,6 +267,9 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
+
+          {/* Reviews */}
+          <ProductReviews productId={product.id} />
 
           {/* Q&A Section */}
           <ProductQA productId={product.id} productName={product.name} productDescription={product.description} />
