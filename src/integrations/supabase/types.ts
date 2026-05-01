@@ -107,6 +107,60 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_wishlists: {
+        Row: {
+          created_at: string
+          email_sent_at: string | null
+          expires_at: string | null
+          id: string
+          message: string | null
+          occasion: string | null
+          opened_at: string | null
+          product_ids: string[]
+          recipient_email: string | null
+          recipient_name: string | null
+          sender_id: string | null
+          sender_name: string
+          slug: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          email_sent_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          occasion?: string | null
+          opened_at?: string | null
+          product_ids?: string[]
+          recipient_email?: string | null
+          recipient_name?: string | null
+          sender_id?: string | null
+          sender_name: string
+          slug?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          email_sent_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          occasion?: string | null
+          opened_at?: string | null
+          product_ids?: string[]
+          recipient_email?: string | null
+          recipient_name?: string | null
+          sender_id?: string | null
+          sender_name?: string
+          slug?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       loyalty_points: {
         Row: {
           created_at: string
@@ -745,6 +799,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_gift_view: { Args: { _slug: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
