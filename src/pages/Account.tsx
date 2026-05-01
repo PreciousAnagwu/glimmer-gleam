@@ -347,7 +347,7 @@ const Account: React.FC = () => {
                   ) : (
                     <div className="space-y-4">
                       {orders.map((order) => (
-                        <div key={order.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                        <Link key={order.id} to={`/track/${order.id}`} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                               <Package className="h-6 w-6 text-primary" />
@@ -368,7 +368,7 @@ const Account: React.FC = () => {
                             </div>
                             <ChevronRight className="h-5 w-5 text-muted-foreground" />
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -379,9 +379,21 @@ const Account: React.FC = () => {
             {/* Wishlist Tab */}
             <TabsContent value="wishlist">
               <Card>
-                <CardHeader>
-                  <CardTitle>My Wishlist ({wishlistItems.length})</CardTitle>
-                  <CardDescription>Items you've saved for later</CardDescription>
+                <CardHeader className="flex flex-row items-start justify-between gap-2">
+                  <div>
+                    <CardTitle>My Wishlist ({wishlistItems.length})</CardTitle>
+                    <CardDescription>Items you've saved for later</CardDescription>
+                  </div>
+                  {wishlistItems.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const ids = wishlistItems.map((i) => i.productId);
+                      const payload = encodeURIComponent(btoa(JSON.stringify(ids)));
+                      const url = `${window.location.origin}/wishlist/share/${payload}`;
+                      navigator.clipboard.writeText(url).then(() => {
+                        toast({ title: 'Link copied!', description: 'Share your wishlist with friends 💝' });
+                      });
+                    }}>Share wishlist</Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {wishlistItems.length === 0 ? (
