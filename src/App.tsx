@@ -15,6 +15,8 @@ import Checkout from "./pages/Checkout";
 import Admin from "./pages/Admin";
 import Rewards from "./pages/Rewards";
 import Help from "./pages/Help";
+import OrderTracking from "./pages/OrderTracking";
+import SharedWishlist from "./pages/SharedWishlist";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
             <Route path="/help" element={<Help />} />
             <Route path="/help/:topic" element={<Help />} />
+            <Route path="/track/:id" element={<OrderTracking />} />
+            <Route path="/wishlist/share/:payload" element={<SharedWishlist />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
