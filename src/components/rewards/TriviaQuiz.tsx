@@ -71,21 +71,14 @@ export function TriviaQuiz({ onPointsAwarded }: { onPointsAwarded: () => void })
     if (!user) return;
     setSubmitting(true);
     const earned = correct * POINTS_PER_CORRECT;
-    if (earned > 0) {
-      const { data: lp } = await supabase.from('loyalty_points').select('*').eq('user_id', user.id).maybeSingle();
-      if (lp) {
-        await supabase.from('loyalty_points').update({
-          points_balance: lp.points_balance + earned,
-          lifetime_points: lp.lifetime_points + earned,
-        }).eq('user_id', user.id);
-      }
-      await supabase.from('points_transactions').insert({
-        user_id: user.id, points: earned, type: 'game_reward', description: `Trivia: ${correct}/${round.length} correct`,
-      });
-    }
-    await supabase.from('game_plays').insert({
+    const { error } = await supabase.from('game_plays').insert({
       user_id: user.id, game_type: 'quiz', points_earned: earned, metadata: { correct, total: round.length },
     });
+    if (error) {
+      toast({ title: 'Points not saved', description: error.message, variant: 'destructive' });
+      setSubmitting(false);
+      return;
+    }
     toast({ title: `Quiz complete!`, description: `You got ${correct}/${round.length} and earned ${earned} points.` });
     setDone(true); setSubmitting(false); setCanPlay(false);
     onPointsAwarded();
