@@ -18,6 +18,7 @@ import Help from "./pages/Help";
 import OrderTracking from "./pages/OrderTracking";
 import GiftWishlistView from "./pages/GiftWishlistView";
 import NotFound from "./pages/NotFound";
+import { CartDrawer } from "@/components/layout/CartDrawer";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <CartDrawer />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/shop" element={<Shop />} />
