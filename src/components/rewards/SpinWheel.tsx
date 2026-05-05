@@ -52,20 +52,14 @@ export function SpinWheel({ onPointsAwarded }: { onPointsAwarded: () => void }) 
 
     setTimeout(async () => {
       const won = SEGMENTS[idx];
-      // Award points via direct updates
-      const { data: lp } = await supabase.from('loyalty_points').select('*').eq('user_id', user.id).maybeSingle();
-      if (lp) {
-        await supabase.from('loyalty_points').update({
-          points_balance: lp.points_balance + won.points,
-          lifetime_points: lp.lifetime_points + won.points,
-        }).eq('user_id', user.id);
-      }
-      await supabase.from('points_transactions').insert({
-        user_id: user.id, points: won.points, type: 'game_reward', description: `Spin & Win: ${won.points} pts`,
-      });
-      await supabase.from('game_plays').insert({
+      const { error } = await supabase.from('game_plays').insert({
         user_id: user.id, game_type: 'spin', points_earned: won.points, metadata: { segment: idx },
       });
+      if (error) {
+        toast({ title: 'Points not saved', description: error.message, variant: 'destructive' });
+        setSpinning(false);
+        return;
+      }
       toast({ title: `🎉 You won ${won.points} points!`, description: 'Come back tomorrow for another spin.' });
       setSpinning(false);
       setCanPlay(false);
