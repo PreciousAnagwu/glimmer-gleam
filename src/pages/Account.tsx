@@ -177,23 +177,21 @@ const Account: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    let channel: any;
-    (async () => {
+    const fetchLoyalty = async () => {
       const { data } = await supabase
         .from('loyalty_points')
         .select('points_balance, lifetime_points, referral_code')
         .eq('user_id', user.id)
         .maybeSingle();
       if (data) setLoyalty(data);
-      // Realtime updates so points reflect immediately
-      channel = supabase
-        .channel('account-loyalty')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points', filter: `user_id=eq.${user.id}` }, (payload: any) => {
-          if (payload.new) setLoyalty(payload.new);
-        })
-        .subscribe();
-    })();
-    return () => { if (channel) supabase.removeChannel(channel); };
+    };
+    fetchLoyalty();
+    const channel = supabase
+      .channel(`account-loyalty-${user.id}-${Math.random().toString(36).slice(2, 8)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points', filter: `user_id=eq.${user.id}` }, () => fetchLoyalty())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'points_transactions', filter: `user_id=eq.${user.id}` }, () => fetchLoyalty())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   return (
