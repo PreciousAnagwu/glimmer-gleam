@@ -18,6 +18,7 @@ import Help from "./pages/Help";
 import OrderTracking from "./pages/OrderTracking";
 import GiftWishlistView from "./pages/GiftWishlistView";
 import NotFound from "./pages/NotFound";
+import { CartDrawer } from "@/components/layout/CartDrawer";
 
 const queryClient = new QueryClient();
 
