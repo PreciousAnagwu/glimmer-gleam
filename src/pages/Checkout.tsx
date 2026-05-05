@@ -57,17 +57,26 @@ export default function Checkout() {
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
+    const fetchCheckoutLoyalty = async () => {
       const [lpRes, sRes] = await Promise.all([
         supabase.from('loyalty_points').select('points_balance').eq('user_id', user.id).maybeSingle(),
         supabase.from('rewards_settings').select('points_per_naira, min_redeem_points').limit(1).maybeSingle(),
       ]);
-      if (lpRes.data) setPointsBalance(lpRes.data.points_balance);
+      setPointsBalance(lpRes.data?.points_balance ?? 0);
       if (sRes.data) {
         setPointsPerNaira(Number(sRes.data.points_per_naira) || 0.5);
         setMinRedeem(sRes.data.min_redeem_points || 100);
       }
-    })();
+    };
+
+    fetchCheckoutLoyalty();
+    const channel = supabase
+      .channel(`checkout-loyalty-${user.id}-${Math.random()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_points', filter: `user_id=eq.${user.id}` }, fetchCheckoutLoyalty)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'points_transactions', filter: `user_id=eq.${user.id}` }, fetchCheckoutLoyalty)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   // Verify Paystack payment on callback
