@@ -57,29 +57,30 @@ export function TriviaQuiz({ onPointsAwarded }: { onPointsAwarded: () => void })
   const choose = (i: number) => {
     if (selected !== null) return;
     setSelected(i);
-    if (i === round[idx].answer) setCorrect(c => c + 1);
+    const nextCorrect = correct + (i === round[idx].answer ? 1 : 0);
+    if (i === round[idx].answer) setCorrect(nextCorrect);
     setTimeout(() => {
       if (idx + 1 < round.length) {
         setIdx(idx + 1); setSelected(null);
       } else {
-        finish();
+        finish(nextCorrect);
       }
     }, 1200);
   };
 
-  const finish = async () => {
+  const finish = async (finalCorrect = correct) => {
     if (!user) return;
     setSubmitting(true);
-    const earned = correct * POINTS_PER_CORRECT;
+    const earned = finalCorrect * POINTS_PER_CORRECT;
     const { error } = await supabase.from('game_plays').insert({
-      user_id: user.id, game_type: 'quiz', points_earned: earned, metadata: { correct, total: round.length },
+      user_id: user.id, game_type: 'quiz', points_earned: earned, metadata: { correct: finalCorrect, total: round.length },
     });
     if (error) {
       toast({ title: 'Points not saved', description: error.message, variant: 'destructive' });
       setSubmitting(false);
       return;
     }
-    toast({ title: `Quiz complete!`, description: `You got ${correct}/${round.length} and earned ${earned} points.` });
+    toast({ title: `Quiz complete!`, description: `You got ${finalCorrect}/${round.length} and earned ${earned} points.` });
     setDone(true); setSubmitting(false); setCanPlay(false);
     onPointsAwarded();
   };
