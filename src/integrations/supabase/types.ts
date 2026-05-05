@@ -800,6 +800,10 @@ export type Database = {
         Returns: boolean
       }
       record_gift_view: { Args: { _slug: string }; Returns: undefined }
+      redeem_loyalty_points: {
+        Args: { _naira_value: number; _order_id: string; _points: number }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
