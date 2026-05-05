@@ -98,9 +98,14 @@ export default function Rewards() {
       case 'order_reward': return <Star className="h-4 w-4 text-primary" />;
       case 'referral_bonus': return <Users className="h-4 w-4 text-blue-500" />;
       case 'redemption': return <ArrowRight className="h-4 w-4 text-red-500" />;
+      case 'game_reward': return <Gamepad2 className="h-4 w-4 text-gold" />;
+      case 'admin_credit': return <Trophy className="h-4 w-4 text-green-500" />;
+      case 'admin_debit': return <ArrowRight className="h-4 w-4 text-red-500" />;
       default: return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
+
+  const formatType = (t: string) => t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   if (loading) {
     return (
@@ -245,7 +250,8 @@ export default function Rewards() {
                         <div className="flex items-center gap-3">
                           {getTypeIcon(tx.type)}
                           <div>
-                            <p className="text-sm font-medium">{tx.description || tx.type.replace('_', ' ')}</p>
+                            <p className="text-sm font-medium">{tx.description || formatType(tx.type)}</p>
+                            <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70">{formatType(tx.type)}</p>
                             <p className="text-xs text-muted-foreground">{new Date(tx.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
