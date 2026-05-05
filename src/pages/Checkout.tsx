@@ -290,15 +290,13 @@ export default function Checkout() {
 
       // Deduct redeemed points (if any) immediately
       if (pointsToRedeem > 0 && user) {
-        const newBalance = Math.max(0, pointsBalance - pointsToRedeem);
-        await supabase.from('loyalty_points').update({ points_balance: newBalance }).eq('user_id', user.id);
-        await supabase.from('points_transactions').insert({
-          user_id: user.id,
-          points: -pointsToRedeem,
-          type: 'redemption',
-          description: `Redeemed for ₦${pointsDiscount} off order`,
-          order_id: order.id,
+        const { error: redeemError } = await (supabase as any).rpc('redeem_loyalty_points', {
+          _order_id: order.id,
+          _points: pointsToRedeem,
+          _naira_value: pointsDiscount,
         });
+        if (redeemError) throw redeemError;
+        setPointsBalance(prev => Math.max(0, prev - pointsToRedeem));
       }
 
       // Increment coupon usage so admin sees real usage and max_uses applies
