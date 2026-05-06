@@ -279,7 +279,14 @@ export function AdminProductManager() {
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{categories.find((c) => c.id === product.category_id)?.name}</TableCell>
                 <TableCell>
-                  {product.variants[0] ? formatPrice(Number(product.variants[0].price)) : '—'}
+                  {product.variants[0] ? (
+                    <div className="flex flex-col">
+                      <span className="font-medium">{formatPrice(Number(product.variants[0].price))}</span>
+                      {product.variants[0].original_price && (
+                        <span className="text-xs text-muted-foreground line-through">{formatPrice(Number(product.variants[0].original_price))}</span>
+                      )}
+                    </div>
+                  ) : '—'}
                 </TableCell>
                 <TableCell>
                   <Badge variant={product.in_stock ? 'default' : 'destructive'}>
