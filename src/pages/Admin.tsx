@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2, Star
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2, Star, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ import { AdminCouponManager } from '@/components/admin/AdminCouponManager';
 import { AdminQAManager } from '@/components/admin/AdminQAManager';
 import { AdminNewsletterManager } from '@/components/admin/AdminNewsletterManager';
 import { AdminRewardsManager } from '@/components/admin/AdminRewardsManager';
+import { AdminContentManager } from '@/components/admin/AdminContentManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 
@@ -258,6 +259,7 @@ export default function Admin() {
             <TabsTrigger value="qa"><MessageCircle className="mr-2 h-4 w-4" />Q&A</TabsTrigger>
             <TabsTrigger value="newsletter"><Mail className="mr-2 h-4 w-4" />Newsletter</TabsTrigger>
             <TabsTrigger value="rewards"><Star className="mr-2 h-4 w-4" />Rewards</TabsTrigger>
+            <TabsTrigger value="content"><FileText className="mr-2 h-4 w-4" />Site Content</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders">
@@ -521,6 +523,17 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <AdminRewardsManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="content">
+            <Card>
+              <CardHeader>
+                <CardTitle>Site Content (Help / FAQ / Policies)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminContentManager />
               </CardContent>
             </Card>
           </TabsContent>

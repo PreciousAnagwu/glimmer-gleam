@@ -279,7 +279,14 @@ export function AdminProductManager() {
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{categories.find((c) => c.id === product.category_id)?.name}</TableCell>
                 <TableCell>
-                  {product.variants[0] ? formatPrice(Number(product.variants[0].price)) : '—'}
+                  {product.variants[0] ? (
+                    <div className="flex flex-col">
+                      <span className="font-medium">{formatPrice(Number(product.variants[0].price))}</span>
+                      {product.variants[0].original_price && (
+                        <span className="text-xs text-muted-foreground line-through">{formatPrice(Number(product.variants[0].original_price))}</span>
+                      )}
+                    </div>
+                  ) : '—'}
                 </TableCell>
                 <TableCell>
                   <Badge variant={product.in_stock ? 'default' : 'destructive'}>
@@ -450,53 +457,53 @@ export function AdminProductManager() {
             {/* Variants */}
             <div>
               <div className="flex items-center justify-between">
-                <Label>Variants</Label>
+                <Label>Variants & Pricing</Label>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, variants: [...form.variants, { style: '', price: '', originalPrice: '' }] })}>
                   <Plus className="mr-1 h-3 w-3" /> Add Variant
                 </Button>
               </div>
-              <div className="mt-2 space-y-2">
-                {form.variants.map((v, i) => (
-                  <div key={i} className="flex gap-2">
-                    <Input
-                      value={v.style}
-                      onChange={(e) => {
-                        const vars = [...form.variants];
-                        vars[i] = { ...vars[i], style: e.target.value };
-                        setForm({ ...form, variants: vars });
-                      }}
-                      placeholder="Style name"
-                      className="flex-1"
-                    />
-                    <Input
-                      type="number"
-                      value={v.price}
-                      onChange={(e) => {
-                        const vars = [...form.variants];
-                        vars[i] = { ...vars[i], price: e.target.value };
-                        setForm({ ...form, variants: vars });
-                      }}
-                      placeholder="Price"
-                      className="w-28"
-                    />
-                    <Input
-                      type="number"
-                      value={v.originalPrice}
-                      onChange={(e) => {
-                        const vars = [...form.variants];
-                        vars[i] = { ...vars[i], originalPrice: e.target.value };
-                        setForm({ ...form, variants: vars });
-                      }}
-                      placeholder="Was (opt)"
-                      className="w-28"
-                    />
-                    {form.variants.length > 1 && (
-                      <Button variant="ghost" size="icon-sm" onClick={() => setForm({ ...form, variants: form.variants.filter((_, idx) => idx !== i) })}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
+              <p className="mt-1 text-xs text-muted-foreground">
+                Set <strong>Sale price</strong> as the current selling price. Fill <strong>Original price</strong> only when on sale — it will appear slashed/struck-through and a "Sale" badge will show on the product.
+              </p>
+              <div className="mt-2 space-y-3">
+                {form.variants.map((v, i) => {
+                  const onSale = !!v.originalPrice && parseFloat(v.originalPrice) > parseFloat(v.price || '0');
+                  return (
+                    <div key={i} className="rounded-lg border p-3 space-y-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-xs">Style</Label>
+                          <Input value={v.style} onChange={(e) => { const vars = [...form.variants]; vars[i] = { ...vars[i], style: e.target.value }; setForm({ ...form, variants: vars }); }} placeholder="e.g. Gold" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Sale price (₦)</Label>
+                          <Input type="number" value={v.price} onChange={(e) => { const vars = [...form.variants]; vars[i] = { ...vars[i], price: e.target.value }; setForm({ ...form, variants: vars }); }} placeholder="Current price" />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Original price (₦) — slashed</Label>
+                          <Input type="number" value={v.originalPrice} onChange={(e) => { const vars = [...form.variants]; vars[i] = { ...vars[i], originalPrice: e.target.value }; setForm({ ...form, variants: vars }); }} placeholder="Leave blank if not on sale" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        {onSale ? (
+                          <div className="flex items-center gap-2 text-xs">
+                            <Badge className="bg-destructive text-destructive-foreground">Sale</Badge>
+                            <span className="font-medium text-gold">₦{Number(v.price).toLocaleString()}</span>
+                            <span className="text-muted-foreground line-through">₦{Number(v.originalPrice).toLocaleString()}</span>
+                            <span className="text-green-600">
+                              -{Math.round(((parseFloat(v.originalPrice) - parseFloat(v.price)) / parseFloat(v.originalPrice)) * 100)}%
+                            </span>
+                          </div>
+                        ) : <span className="text-xs text-muted-foreground">Not on sale</span>}
+                        {form.variants.length > 1 && (
+                          <Button variant="ghost" size="icon-sm" onClick={() => setForm({ ...form, variants: form.variants.filter((_, idx) => idx !== i) })}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
