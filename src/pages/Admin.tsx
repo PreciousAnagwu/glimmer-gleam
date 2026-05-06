@@ -526,6 +526,17 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="content">
+            <Card>
+              <CardHeader>
+                <CardTitle>Site Content (Help / FAQ / Policies)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminContentManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
     </div>
