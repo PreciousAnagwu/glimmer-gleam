@@ -33,6 +33,7 @@ export function AdminContentManager() {
         <TabsTrigger value="returns">Returns</TabsTrigger>
         <TabsTrigger value="size">Size Guide</TabsTrigger>
         <TabsTrigger value="contact">Contact</TabsTrigger>
+        <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
       </TabsList>
 
       <TabsContent value="faq"><FaqEditor data={getContent(content, 'help.faq')} onSave={(v) => save('help.faq', v)} saving={saving === 'help.faq'} /></TabsContent>
@@ -40,6 +41,7 @@ export function AdminContentManager() {
       <TabsContent value="returns"><LinesEditor title="Returns paragraphs" data={getContent(content, 'help.returns')} onSave={(v) => save('help.returns', v)} saving={saving === 'help.returns'} /></TabsContent>
       <TabsContent value="size"><SizeEditor data={getContent(content, 'help.size_guide')} onSave={(v) => save('help.size_guide', v)} saving={saving === 'help.size_guide'} /></TabsContent>
       <TabsContent value="contact"><ContactEditor data={getContent(content, 'help.contact')} onSave={(v) => save('help.contact', v)} saving={saving === 'help.contact'} /></TabsContent>
+      <TabsContent value="testimonials"><TestimonialsEditor data={getContent(content, 'home.testimonials')} onSave={(v) => save('home.testimonials', v)} saving={saving === 'home.testimonials'} /></TabsContent>
     </Tabs>
   );
 }
