@@ -33,6 +33,7 @@ export function AdminContentManager() {
         <TabsTrigger value="returns">Returns</TabsTrigger>
         <TabsTrigger value="size">Size Guide</TabsTrigger>
         <TabsTrigger value="contact">Contact</TabsTrigger>
+        <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
       </TabsList>
 
       <TabsContent value="faq"><FaqEditor data={getContent(content, 'help.faq')} onSave={(v) => save('help.faq', v)} saving={saving === 'help.faq'} /></TabsContent>
@@ -40,6 +41,7 @@ export function AdminContentManager() {
       <TabsContent value="returns"><LinesEditor title="Returns paragraphs" data={getContent(content, 'help.returns')} onSave={(v) => save('help.returns', v)} saving={saving === 'help.returns'} /></TabsContent>
       <TabsContent value="size"><SizeEditor data={getContent(content, 'help.size_guide')} onSave={(v) => save('help.size_guide', v)} saving={saving === 'help.size_guide'} /></TabsContent>
       <TabsContent value="contact"><ContactEditor data={getContent(content, 'help.contact')} onSave={(v) => save('help.contact', v)} saving={saving === 'help.contact'} /></TabsContent>
+      <TabsContent value="testimonials"><TestimonialsEditor data={getContent(content, 'home.testimonials')} onSave={(v) => save('home.testimonials', v)} saving={saving === 'home.testimonials'} /></TabsContent>
     </Tabs>
   );
 }
@@ -125,6 +127,36 @@ function ContactEditor({ data, onSave, saving }: any) {
       <Button onClick={() => onSave(c)} disabled={saving} className="bg-gold text-primary-foreground hover:bg-gold/90">
         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save
       </Button>
+    </CardContent></Card>
+  );
+}
+
+function TestimonialsEditor({ data, onSave, saving }: any) {
+  const [items, setItems] = useState<any[]>(data.items || []);
+  const update = (i: number, key: string, val: any) => {
+    const n = [...items]; n[i] = { ...n[i], [key]: val }; setItems(n);
+  };
+  return (
+    <Card><CardHeader><CardTitle>Homepage testimonials</CardTitle></CardHeader><CardContent className="space-y-4">
+      {items.map((it, i) => (
+        <div key={i} className="space-y-2 rounded-lg border p-3">
+          <div className="flex justify-between items-center">
+            <Label>Testimonial {i + 1}</Label>
+            <Button size="icon-sm" variant="ghost" onClick={() => setItems(items.filter((_, x) => x !== i))}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+          <Input placeholder="Name" value={it.name || ''} onChange={(e) => update(i, 'name', e.target.value)} />
+          <Input placeholder="Role" value={it.role || ''} onChange={(e) => update(i, 'role', e.target.value)} />
+          <Input placeholder="Avatar image URL" value={it.image || ''} onChange={(e) => update(i, 'image', e.target.value)} />
+          <Input placeholder="Rating (1-5)" type="number" min={1} max={5} value={it.rating ?? 5} onChange={(e) => update(i, 'rating', parseInt(e.target.value) || 5)} />
+          <Textarea placeholder="Quote" value={it.content || ''} onChange={(e) => update(i, 'content', e.target.value)} rows={3} />
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={() => setItems([...items, { name: '', role: '', image: '', content: '', rating: 5 }])}><Plus className="mr-1 h-4 w-4" /> Add</Button>
+        <Button onClick={() => onSave({ items })} disabled={saving} className="bg-gold text-primary-foreground hover:bg-gold/90">
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save
+        </Button>
+      </div>
     </CardContent></Card>
   );
 }

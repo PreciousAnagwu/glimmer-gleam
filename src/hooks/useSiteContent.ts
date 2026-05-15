@@ -41,6 +41,13 @@ export const DEFAULT_SITE_CONTENT: SiteContentMap = {
     necklaces: 'Choker 35–40cm · Princess 45cm · Matinee 55–60cm · Opera 70–85cm.',
   },
   'help.contact': { email: 'panagwu@gmail.com', whatsapp: '+2348034231231', phone: '+2348034231231' },
+  'home.testimonials': {
+    items: [
+      { name: 'Adaeze Okonkwo', role: 'Fashion Blogger', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', content: "The quality of J's Jewels jewelry is absolutely stunning. Every piece I've purchased has become a staple in my collection.", rating: 5 },
+      { name: 'Chiamaka Eze', role: 'Business Executive', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150', content: "From engagement rings to everyday accessories, J's Jewels has never disappointed. The attention to detail is remarkable.", rating: 5 },
+      { name: 'Folake Adeyemi', role: 'Wedding Planner', image: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150', content: "I recommend J's Jewels to all my brides. Their bridal sets are breathtaking and the customer service is exceptional.", rating: 5 },
+    ],
+  },
 };
 
 export function useSiteContent() {

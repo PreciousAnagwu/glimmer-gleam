@@ -29,7 +29,7 @@ export function CTASection() {
                 purchase!
               </p>
               <Button variant="gold" size="lg" className="mt-6" asChild>
-                <Link to="/play-earn">
+                <Link to="/rewards">
                   Start Playing
                   <Gamepad2 className="ml-2 h-4 w-4" />
                 </Link>
@@ -49,19 +49,19 @@ export function CTASection() {
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-4 py-2 text-sm font-medium text-gold">
                 <Gift className="h-4 w-4" />
-                Gift Cards
+                Gift a Wishlist
               </div>
               <h3 className="mt-6 font-display text-3xl font-bold text-foreground md:text-4xl">
                 The Perfect Gift <br />
                 For Every Occasion
               </h3>
               <p className="mt-4 max-w-sm text-muted-foreground">
-                Give the gift of choice with our digital gift cards. Available in various amounts
-                and delivered instantly.
+                Curate a wishlist and send it to someone special with a personal message —
+                they pick what they love, you make their day.
               </p>
               <Button variant="luxury" size="lg" className="mt-6" asChild>
-                <Link to="/gift-cards">
-                  Shop Gift Cards
+                <Link to="/account?tab=wishlist">
+                  Send a Gift Wishlist
                   <Gift className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
