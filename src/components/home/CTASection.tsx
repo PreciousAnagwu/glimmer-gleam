@@ -29,7 +29,7 @@ export function CTASection() {
                 purchase!
               </p>
               <Button variant="gold" size="lg" className="mt-6" asChild>
-                <Link to="/play-earn">
+                <Link to="/rewards">
                   Start Playing
                   <Gamepad2 className="ml-2 h-4 w-4" />
                 </Link>
