@@ -9,6 +9,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { NotificationBell } from './NotificationBell';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -140,6 +141,7 @@ export function Navbar() {
                   </Button>
                 </Link>
               )}
+              {user && <NotificationBell />}
               {user && (
                 <Link to="/rewards">
                   <Button variant="ghost" size="icon" className="text-primary">

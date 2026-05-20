@@ -48,6 +48,9 @@ interface OrderWithItems {
   notes: string | null;
   user_id: string;
   is_test_order: boolean;
+  is_gift?: boolean;
+  gift_sender_name?: string | null;
+  gift_message?: string | null;
   order_items: {
     id: string;
     product_name: string;
@@ -309,7 +312,14 @@ export default function Admin() {
                   <TableBody>
                     {filteredOrders.map((order) => (
                       <TableRow key={order.id}>
-                        <TableCell className="font-mono text-xs">{order.id.slice(0, 8).toUpperCase()}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {order.id.slice(0, 8).toUpperCase()}
+                          {order.is_gift && (
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-rose-gold/20 text-rose-gold px-1.5 py-0.5 text-[10px] font-semibold normal-case">
+                              🎁 Gift
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium text-sm">{order.shipping_name}</p>
@@ -349,6 +359,13 @@ export default function Admin() {
                                       <p>{order.shipping_city}, {order.shipping_state}</p>
                                     </div>
                                   </div>
+                                  {order.is_gift && (
+                                    <div className="rounded-lg border-2 border-rose-gold/30 bg-rose-gold/5 p-3 text-sm">
+                                      <p className="font-semibold flex items-center gap-1">🎁 Gift Order</p>
+                                      {order.gift_sender_name && <p className="text-xs mt-1">From: <span className="font-medium">{order.gift_sender_name}</span></p>}
+                                      {order.gift_message && <p className="text-xs italic mt-1">"{order.gift_message}"</p>}
+                                    </div>
+                                  )}
                                   {order.notes && (
                                     <div className="text-sm">
                                       <p className="text-muted-foreground">Notes</p>

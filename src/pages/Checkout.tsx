@@ -32,6 +32,9 @@ export default function Checkout() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
+  const giftId = searchParams.get('gift');
+  const [gift, setGift] = useState<any>(null);
+
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('paystack');
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -120,6 +123,27 @@ export default function Checkout() {
     state: '',
     notes: '',
   });
+
+  // Load gift context if present — locks shipping to recipient address
+  useEffect(() => {
+    if (!giftId) return;
+    (async () => {
+      const { data } = await supabase.from('gift_wishlists').select('*').eq('id', giftId).maybeSingle();
+      if (!data) return;
+      setGift(data);
+      const name = (data.shipping_name || data.recipient_name || '').split(' ');
+      setShippingInfo((prev) => ({
+        ...prev,
+        firstName: name[0] || prev.firstName,
+        lastName: name.slice(1).join(' ') || prev.lastName,
+        phone: data.shipping_phone || prev.phone,
+        address: data.shipping_address || prev.address,
+        city: data.shipping_city || prev.city,
+        state: data.shipping_state || prev.state,
+        notes: data.message ? `🎁 Gift message: ${data.message}` : prev.notes,
+      }));
+    })();
+  }, [giftId]);
 
   const subtotal = getTotalPrice();
   const shippingFee = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.fee || 0;
@@ -277,6 +301,13 @@ export default function Checkout() {
           shipping_city: shippingInfo.city || locationName,
           shipping_state: shippingInfo.state || locationName,
           notes: [shippingInfo.notes, pointsToRedeem > 0 ? `Redeemed ${pointsToRedeem} loyalty points (₦${pointsDiscount})` : null].filter(Boolean).join(' • ') || null,
+          ...(gift ? {
+            is_gift: true,
+            gift_id: gift.id,
+            gift_message: gift.message,
+            gift_sender_name: gift.sender_name,
+            gift_recipient_user_id: gift.recipient_user_id,
+          } : {}),
         })
         .select()
         .single();
@@ -296,6 +327,24 @@ export default function Checkout() {
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw itemsError;
+
+      // Mark gift fulfilled + notify the gift recipient (if they have an account)
+      if (gift) {
+        await supabase.from('gift_wishlists')
+          .update({ status: 'fulfilled', fulfilled_order_id: order.id })
+          .eq('id', gift.id);
+        if (gift.recipient_user_id && gift.recipient_user_id !== user!.id) {
+          await supabase.from('notifications').insert({
+            user_id: gift.recipient_user_id,
+            type: 'gift_received',
+            title: gift.gift_type === 'request'
+              ? `🎁 ${shippingInfo.firstName} just gifted your wishlist!`
+              : `🎁 You've received a gift from ${gift.sender_name}!`,
+            body: gift.message || 'Track your order to see when it arrives.',
+            link: `/track/${order.id}`,
+          });
+        }
+      }
 
       // Deduct redeemed points (if any) immediately
       if (pointsToRedeem > 0 && user) {
@@ -469,6 +518,16 @@ export default function Checkout() {
                       <Truck className="h-5 w-5 text-gold" />
                       <h2 className="font-display text-xl font-semibold">Shipping Information</h2>
                     </div>
+
+                    {gift && (
+                      <div className="rounded-lg border-2 border-rose-gold/40 bg-rose-gold/5 p-4">
+                        <p className="font-semibold flex items-center gap-2">🎁 Gift order</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Shipping to <span className="font-medium text-foreground">{gift.shipping_name}</span> at the address below (locked).
+                        </p>
+                        {gift.message && <p className="mt-2 text-sm italic">"{gift.message}"</p>}
+                      </div>
+                    )}
 
                     {!isAuthenticated && (
                       <div className="rounded-lg bg-gold/10 p-4 text-sm">

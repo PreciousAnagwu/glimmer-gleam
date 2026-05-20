@@ -16,6 +16,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useProducts } from '@/hooks/useProducts';
 import { Trash2, ShoppingBag } from 'lucide-react';
 import { GiftWishlistDialog } from '@/components/wishlist/GiftWishlistDialog';
+import { RequestGiftDialog } from '@/components/wishlist/RequestGiftDialog';
 import { 
   User, 
   Package, 
@@ -44,6 +45,10 @@ interface Order {
   payment_status: string;
   total: number;
   payment_method: string;
+  is_gift?: boolean;
+  gift_sender_name?: string | null;
+  user_id?: string;
+  gift_recipient_user_id?: string | null;
 }
 
 const Account: React.FC = () => {
@@ -56,6 +61,7 @@ const Account: React.FC = () => {
   const addToCart = useCartStore((s) => s.addItem);
   const { getProductById } = useProducts();
   const [giftDialogOpen, setGiftDialogOpen] = useState(false);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
 
   const tabParam = searchParams.get('tab') || 'profile';
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -91,17 +97,17 @@ const Account: React.FC = () => {
     })();
   }, [user]);
 
-  // Fetch orders
+  // Fetch orders (own + gifted-to-me)
   useEffect(() => {
     if (!user) return;
     (async () => {
       setLoadingOrders(true);
       const { data, error } = await supabase
         .from('orders')
-        .select('id, created_at, status, payment_status, total, payment_method')
-        .eq('user_id', user.id)
+        .select('id, created_at, status, payment_status, total, payment_method, is_gift, gift_sender_name, user_id, gift_recipient_user_id')
+        .or(`user_id.eq.${user.id},gift_recipient_user_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
-      if (!error && data) setOrders(data);
+      if (!error && data) setOrders(data as any);
       setLoadingOrders(false);
     })();
   }, [user]);
@@ -353,7 +359,14 @@ const Account: React.FC = () => {
                               <Package className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                              <p className="font-medium text-foreground text-sm">{order.id.slice(0, 8).toUpperCase()}</p>
+                              <p className="font-medium text-foreground text-sm flex items-center gap-1.5">
+                                {order.id.slice(0, 8).toUpperCase()}
+                                {order.is_gift && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-gold/20 text-rose-gold px-1.5 py-0.5 text-[10px] font-semibold">
+                                    <Gift className="h-3 w-3" /> {order.gift_recipient_user_id === user?.id && order.user_id !== user?.id ? `Gift from ${order.gift_sender_name || 'someone'}` : 'Gift'}
+                                  </span>
+                                )}
+                              </p>
                               <p className="text-sm text-muted-foreground">
                                 {new Date(order.created_at).toLocaleDateString()} • {order.payment_method}
                               </p>
@@ -385,9 +398,14 @@ const Account: React.FC = () => {
                     <CardDescription>Items you've saved for later</CardDescription>
                   </div>
                   {wishlistItems.length > 0 && (
-                    <Button variant="gold" size="sm" onClick={() => setGiftDialogOpen(true)}>
-                      <Gift className="mr-1 h-4 w-4" /> Send as Gift
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setRequestDialogOpen(true)}>
+                        <Gift className="mr-1 h-4 w-4" /> Request a Gift
+                      </Button>
+                      <Button variant="gold" size="sm" onClick={() => setGiftDialogOpen(true)}>
+                        <Gift className="mr-1 h-4 w-4" /> Send as Gift
+                      </Button>
+                    </div>
                   )}
                 </CardHeader>
                 <CardContent>
@@ -575,6 +593,7 @@ const Account: React.FC = () => {
 
       <Footer />
       <GiftWishlistDialog open={giftDialogOpen} onOpenChange={setGiftDialogOpen} />
+      <RequestGiftDialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen} />
     </div>
   );
 };

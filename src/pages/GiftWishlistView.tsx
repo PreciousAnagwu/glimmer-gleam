@@ -1,30 +1,38 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
-import { Gift, Loader2, Sparkles, Heart } from 'lucide-react';
+import { Gift, Loader2, Sparkles, Heart, CheckCircle2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface GiftWishlist {
   id: string;
   slug: string;
+  gift_type: 'send' | 'request';
   sender_name: string;
   recipient_name: string | null;
+  recipient_user_id: string | null;
   message: string | null;
   occasion: string | null;
   product_ids: string[];
   expires_at: string | null;
   created_at: string;
+  status: string;
+  shipping_name: string | null;
+  shipping_address: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  fulfilled_order_id: string | null;
 }
 
-// Legacy fallback for old base64 share links
 function decodeLegacy(payload: string): string[] {
   try {
     const json = atob(decodeURIComponent(payload));
@@ -35,8 +43,11 @@ function decodeLegacy(payload: string): string[] {
 
 export default function GiftWishlistView() {
   const { slug, payload } = useParams();
-  const { products, loading: pLoading } = useProducts();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { products, loading: pLoading, getProductById } = useProducts();
   const addToCart = useCartStore((s) => s.addItem);
+  const clearCart = useCartStore((s) => s.clearCart);
   const [gift, setGift] = useState<GiftWishlist | null>(null);
   const [legacyIds, setLegacyIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,14 +75,22 @@ export default function GiftWishlistView() {
     return products.filter((p) => ids.includes(p.id));
   }, [products, pLoading, gift, legacyIds]);
 
-  const addAllToCart = () => {
+  const beTheGifter = () => {
+    if (!gift) return;
+    if (!user) {
+      toast({ title: 'Please sign in to gift', description: 'Quick signup, then pay.' });
+      navigate('/auth', { state: { from: { pathname: `/gift/${gift.slug}` } } });
+      return;
+    }
+    clearCart();
     items.forEach((p) => {
       addToCart({
         productId: p.id, name: p.name, image: p.images[0],
         variant: p.variants[0], color: p.colors[0]?.name || '', quantity: 1,
       });
     });
-    toast({ title: '✨ Added to cart', description: `${items.length} items added.` });
+    toast({ title: '🎁 Gifting items added!', description: 'Address is locked to the recipient.' });
+    navigate(`/checkout?gift=${gift.id}`);
   };
 
   if (notFound) {
@@ -90,10 +109,13 @@ export default function GiftWishlistView() {
     );
   }
 
+  const isRequest = gift?.gift_type === 'request';
+  const isFulfilled = gift?.status === 'fulfilled' && gift?.fulfilled_order_id;
+
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title={gift ? `A gift from ${gift.sender_name}` : 'Shared Wishlist'}
+        title={gift ? (isRequest ? `${gift.sender_name}'s wishlist` : `A gift from ${gift.sender_name}`) : 'Shared Wishlist'}
         description={gift?.message || "Someone's sharing their J's Jewels favorites with you."}
       />
       <Navbar />
@@ -102,39 +124,67 @@ export default function GiftWishlistView() {
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-gold" /></div>
         ) : (
           <>
-            {/* Gift hero */}
             <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background py-16">
               <div className="absolute inset-0 opacity-30 pointer-events-none">
                 <div className="absolute top-10 left-10 text-gold/30"><Sparkles className="h-8 w-8" /></div>
                 <div className="absolute bottom-10 right-20 text-gold/30"><Heart className="h-6 w-6" /></div>
-                <div className="absolute top-20 right-10 text-gold/30"><Sparkles className="h-5 w-5" /></div>
               </div>
               <motion.div
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
                 className="container mx-auto px-4 text-center relative z-10"
               >
-                <div className="mx-auto h-20 w-20 rounded-full bg-gradient-to-br from-gold to-rose-gold flex items-center justify-center shadow-lg">
+                <div className={`mx-auto h-20 w-20 rounded-full ${isRequest ? 'bg-gradient-to-br from-rose-gold to-gold' : 'bg-gradient-to-br from-gold to-rose-gold'} flex items-center justify-center shadow-lg`}>
                   <Gift className="h-10 w-10 text-primary-foreground" />
                 </div>
-                {gift?.occasion && (
-                  <span className="inline-block mt-4 px-3 py-1 rounded-full bg-gold/20 text-gold text-xs font-semibold uppercase tracking-wider">{gift.occasion}</span>
+
+                {isRequest ? (
+                  <>
+                    <h1 className="mt-4 font-display text-3xl md:text-5xl font-bold">
+                      {gift?.sender_name} would love these 💝
+                    </h1>
+                    <p className="mt-3 text-lg text-muted-foreground">
+                      Pick one (or all) to gift them. We'll ship straight to their door.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    {gift?.occasion && (
+                      <span className="inline-block mt-4 px-3 py-1 rounded-full bg-gold/20 text-gold text-xs font-semibold uppercase tracking-wider">{gift.occasion}</span>
+                    )}
+                    <h1 className="mt-4 font-display text-3xl md:text-5xl font-bold">
+                      {gift?.recipient_name ? `Hi ${gift.recipient_name},` : 'A gift just for you'}
+                    </h1>
+                    <p className="mt-3 text-lg text-muted-foreground">
+                      <span className="text-gold font-medium">{gift?.sender_name}</span> sent these to you
+                    </p>
+                  </>
                 )}
-                <h1 className="mt-4 font-display text-3xl md:text-5xl font-bold">
-                  {gift?.recipient_name ? `Hi ${gift.recipient_name},` : 'A gift just for you'}
-                </h1>
-                <p className="mt-3 text-lg text-muted-foreground">
-                  {gift ? <><span className="text-gold font-medium">{gift.sender_name}</span> picked these out for you</> : 'Someone shared their favorites with you'}
-                </p>
+
                 {gift?.message && (
                   <blockquote className="mt-8 max-w-xl mx-auto rounded-2xl border border-gold/30 bg-card p-6 text-base italic text-foreground shadow-sm">
                     "{gift.message}"
                     <footer className="mt-3 text-sm not-italic text-muted-foreground">— {gift.sender_name}</footer>
                   </blockquote>
                 )}
+
+                {isRequest && gift?.shipping_address && (
+                  <div className="mt-6 inline-flex items-center gap-2 text-sm text-muted-foreground bg-secondary/50 px-4 py-2 rounded-full">
+                    <MapPin className="h-4 w-4" /> Ships to {gift.shipping_city}, {gift.shipping_state}
+                  </div>
+                )}
+
+                {isFulfilled && (
+                  <div className="mt-8 max-w-md mx-auto rounded-xl border-2 border-green-500/30 bg-green-500/10 p-4 flex items-center gap-3 text-left">
+                    <CheckCircle2 className="h-8 w-8 text-green-600 shrink-0" />
+                    <div>
+                      <p className="font-semibold">{isRequest ? '🎉 Someone gifted these to you!' : 'Gift paid for — on its way!'}</p>
+                      <Link to={`/track/${gift?.fulfilled_order_id}`} className="text-sm text-gold underline">Track delivery →</Link>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </section>
 
-            {/* Items */}
             <section className="container mx-auto px-4 py-12">
               {items.length === 0 ? (
                 <div className="text-center py-12">
@@ -144,8 +194,14 @@ export default function GiftWishlistView() {
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-                    <h2 className="font-display text-2xl font-bold">Curated for you ({items.length})</h2>
-                    <Button variant="gold" onClick={addAllToCart}>Add all to cart</Button>
+                    <h2 className="font-display text-2xl font-bold">
+                      {isRequest ? `${gift?.sender_name}'s wishlist (${items.length})` : `Curated for you (${items.length})`}
+                    </h2>
+                    {isRequest && !isFulfilled && (
+                      <Button variant="gold" size="lg" onClick={beTheGifter}>
+                        <Gift className="mr-2 h-4 w-4" /> Be the Gifter — Pay & Send
+                      </Button>
+                    )}
                   </div>
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     {items.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
