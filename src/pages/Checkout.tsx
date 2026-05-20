@@ -301,6 +301,13 @@ export default function Checkout() {
           shipping_city: shippingInfo.city || locationName,
           shipping_state: shippingInfo.state || locationName,
           notes: [shippingInfo.notes, pointsToRedeem > 0 ? `Redeemed ${pointsToRedeem} loyalty points (₦${pointsDiscount})` : null].filter(Boolean).join(' • ') || null,
+          ...(gift ? {
+            is_gift: true,
+            gift_id: gift.id,
+            gift_message: gift.message,
+            gift_sender_name: gift.sender_name,
+            gift_recipient_user_id: gift.recipient_user_id,
+          } : {}),
         })
         .select()
         .single();
@@ -320,6 +327,24 @@ export default function Checkout() {
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw itemsError;
+
+      // Mark gift fulfilled + notify the gift recipient (if they have an account)
+      if (gift) {
+        await supabase.from('gift_wishlists')
+          .update({ status: 'fulfilled', fulfilled_order_id: order.id })
+          .eq('id', gift.id);
+        if (gift.recipient_user_id && gift.recipient_user_id !== user!.id) {
+          await supabase.from('notifications').insert({
+            user_id: gift.recipient_user_id,
+            type: 'gift_received',
+            title: gift.gift_type === 'request'
+              ? `🎁 ${shippingInfo.firstName} just gifted your wishlist!`
+              : `🎁 You've received a gift from ${gift.sender_name}!`,
+            body: gift.message || 'Track your order to see when it arrives.',
+            link: `/track/${order.id}`,
+          });
+        }
+      }
 
       // Deduct redeemed points (if any) immediately
       if (pointsToRedeem > 0 && user) {
