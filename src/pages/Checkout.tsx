@@ -124,6 +124,27 @@ export default function Checkout() {
     notes: '',
   });
 
+  // Load gift context if present — locks shipping to recipient address
+  useEffect(() => {
+    if (!giftId) return;
+    (async () => {
+      const { data } = await supabase.from('gift_wishlists').select('*').eq('id', giftId).maybeSingle();
+      if (!data) return;
+      setGift(data);
+      const name = (data.shipping_name || data.recipient_name || '').split(' ');
+      setShippingInfo((prev) => ({
+        ...prev,
+        firstName: name[0] || prev.firstName,
+        lastName: name.slice(1).join(' ') || prev.lastName,
+        phone: data.shipping_phone || prev.phone,
+        address: data.shipping_address || prev.address,
+        city: data.shipping_city || prev.city,
+        state: data.shipping_state || prev.state,
+        notes: data.message ? `🎁 Gift message: ${data.message}` : prev.notes,
+      }));
+    })();
+  }, [giftId]);
+
   const subtotal = getTotalPrice();
   const shippingFee = DELIVERY_LOCATIONS.find(l => l.id === selectedLocation)?.fee || 0;
   const discountAmount = couponApplied
