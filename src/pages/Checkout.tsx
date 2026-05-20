@@ -32,6 +32,9 @@ export default function Checkout() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
+  const giftId = searchParams.get('gift');
+  const [gift, setGift] = useState<any>(null);
+
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('paystack');
   const [selectedLocation, setSelectedLocation] = useState('');
