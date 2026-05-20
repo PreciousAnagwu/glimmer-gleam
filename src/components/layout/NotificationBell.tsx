@@ -102,7 +102,7 @@ export function NotificationBell() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{n.title}</p>
                     {n.body && <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>}
-                    <p className="text-[10px] text-muted-foreground mt-1">{formatDistanceToNow(n.created_at)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{timeAgo(n.created_at)}</p>
                   </div>
                   {!n.read_at && <span className="h-2 w-2 rounded-full bg-rose-gold mt-2 shrink-0" />}
                 </button>
