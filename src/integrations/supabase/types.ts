@@ -112,6 +112,8 @@ export type Database = {
           created_at: string
           email_sent_at: string | null
           expires_at: string | null
+          fulfilled_order_id: string | null
+          gift_type: string
           id: string
           message: string | null
           occasion: string | null
@@ -119,9 +121,16 @@ export type Database = {
           product_ids: string[]
           recipient_email: string | null
           recipient_name: string | null
+          recipient_user_id: string | null
           sender_id: string | null
           sender_name: string
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_name: string | null
+          shipping_phone: string | null
+          shipping_state: string | null
           slug: string
+          status: string
           updated_at: string
           view_count: number
         }
@@ -129,6 +138,8 @@ export type Database = {
           created_at?: string
           email_sent_at?: string | null
           expires_at?: string | null
+          fulfilled_order_id?: string | null
+          gift_type?: string
           id?: string
           message?: string | null
           occasion?: string | null
@@ -136,9 +147,16 @@ export type Database = {
           product_ids?: string[]
           recipient_email?: string | null
           recipient_name?: string | null
+          recipient_user_id?: string | null
           sender_id?: string | null
           sender_name: string
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
+          shipping_state?: string | null
           slug?: string
+          status?: string
           updated_at?: string
           view_count?: number
         }
@@ -146,6 +164,8 @@ export type Database = {
           created_at?: string
           email_sent_at?: string | null
           expires_at?: string | null
+          fulfilled_order_id?: string | null
+          gift_type?: string
           id?: string
           message?: string | null
           occasion?: string | null
@@ -153,9 +173,16 @@ export type Database = {
           product_ids?: string[]
           recipient_email?: string | null
           recipient_name?: string | null
+          recipient_user_id?: string | null
           sender_id?: string | null
           sender_name?: string
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
+          shipping_state?: string | null
           slug?: string
+          status?: string
           updated_at?: string
           view_count?: number
         }
@@ -248,6 +275,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           color: string
@@ -300,7 +360,12 @@ export type Database = {
           coupon_code: string | null
           created_at: string
           discount: number
+          gift_id: string | null
+          gift_message: string | null
+          gift_recipient_user_id: string | null
+          gift_sender_name: string | null
           id: string
+          is_gift: boolean
           is_test_order: boolean
           notes: string | null
           payment_method: string
@@ -324,7 +389,12 @@ export type Database = {
           coupon_code?: string | null
           created_at?: string
           discount?: number
+          gift_id?: string | null
+          gift_message?: string | null
+          gift_recipient_user_id?: string | null
+          gift_sender_name?: string | null
           id?: string
+          is_gift?: boolean
           is_test_order?: boolean
           notes?: string | null
           payment_method: string
@@ -348,7 +418,12 @@ export type Database = {
           coupon_code?: string | null
           created_at?: string
           discount?: number
+          gift_id?: string | null
+          gift_message?: string | null
+          gift_recipient_user_id?: string | null
+          gift_sender_name?: string | null
           id?: string
+          is_gift?: boolean
           is_test_order?: boolean
           notes?: string | null
           payment_method?: string
