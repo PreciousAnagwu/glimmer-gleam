@@ -519,6 +519,16 @@ export default function Checkout() {
                       <h2 className="font-display text-xl font-semibold">Shipping Information</h2>
                     </div>
 
+                    {gift && (
+                      <div className="rounded-lg border-2 border-rose-gold/40 bg-rose-gold/5 p-4">
+                        <p className="font-semibold flex items-center gap-2">🎁 Gift order</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Shipping to <span className="font-medium text-foreground">{gift.shipping_name}</span> at the address below (locked).
+                        </p>
+                        {gift.message && <p className="mt-2 text-sm italic">"{gift.message}"</p>}
+                      </div>
+                    )}
+
                     {!isAuthenticated && (
                       <div className="rounded-lg bg-gold/10 p-4 text-sm">
                         <p>Already have an account? <Link to="/auth" className="font-semibold text-gold underline">Log in</Link> for a faster checkout.</p>
