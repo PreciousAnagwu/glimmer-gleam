@@ -25,6 +25,62 @@ import { AdminRewardsManager } from '@/components/admin/AdminRewardsManager';
 import { AdminContentManager } from '@/components/admin/AdminContentManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
+import { PackingSlip } from '@/components/admin/PackingSlip';
+import { Printer, Truck } from 'lucide-react';
+
+function printPackingSlip(order: any) {
+  const w = window.open('', '_blank', 'width=900,height=1000');
+  if (!w) return;
+  const html = `<!doctype html><html><head><title>Packing Slip ${order.id.slice(0,8)}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>@media print{@page{size:A4;margin:0}body{margin:0}}</style>
+    </head><body></body></html>`;
+  w.document.write(html);
+  w.document.close();
+  // Render slip into the new window using simple HTML mirror
+  const totalQty = order.order_items?.reduce((s:number,i:any)=>s+i.quantity,0)||0;
+  w.document.body.innerHTML = `
+    <div style="padding:32px;font-family:Arial,sans-serif;color:#000;max-width:210mm;margin:auto">
+      <div style="display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:20px">
+        <div><h1 style="margin:0;font-size:24px">J's Jewels</h1><p style="margin:0;font-size:11px;color:#666">Packing Slip</p></div>
+        <div style="text-align:right;font-size:11px">
+          <p style="margin:2px 0"><b>Order:</b> #${order.id.slice(0,8).toUpperCase()}</p>
+          <p style="margin:2px 0"><b>Date:</b> ${new Date(order.created_at).toLocaleDateString()}</p>
+          <p style="margin:2px 0"><b>Items:</b> ${totalQty}</p>
+        </div>
+      </div>
+      ${order.is_gift?`<div style="border:2px dashed #f43f5e;background:#fff1f2;padding:14px;border-radius:6px;margin-bottom:20px">
+        <p style="margin:0;font-weight:bold">🎁 GIFT ORDER — Include note in package</p>
+        ${order.gift_sender_name?`<p style="margin:8px 0 0;font-size:13px"><b>From:</b> ${order.gift_sender_name}</p>`:''}
+        ${order.gift_message?`<div style="margin-top:8px;padding:10px;background:#fff;border:1px solid #fecdd3;border-radius:4px"><p style="margin:0;font-size:10px;color:#666;text-transform:uppercase">Personal message</p><p style="margin:4px 0 0;font-style:italic">"${order.gift_message}"</p></div>`:''}
+        <p style="margin:10px 0 0;font-size:11px;color:#666">⚠ Do not include receipt or pricing. Wrap as gift.</p>
+      </div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px">
+        <div><h2 style="font-size:11px;font-weight:bold;color:#666;text-transform:uppercase;margin:0 0 8px">Ship To</h2>
+          <p style="margin:0;font-weight:600">${order.shipping_name}</p>
+          <p style="margin:0;font-size:13px">${order.shipping_address}</p>
+          <p style="margin:0;font-size:13px">${order.shipping_city}, ${order.shipping_state}</p>
+          <p style="margin:8px 0 0;font-size:13px">📞 ${order.shipping_phone}</p>
+          <p style="margin:0;font-size:13px">✉ ${order.shipping_email||''}</p>
+        </div>
+        ${order.notes?`<div><h2 style="font-size:11px;font-weight:bold;color:#666;text-transform:uppercase;margin:0 0 8px">Order Notes</h2><p style="margin:0;font-size:13px">${order.notes}</p></div>`:''}
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid #000">
+          <th style="text-align:left;padding:8px">Item</th><th style="text-align:left;padding:8px">Style</th>
+          <th style="text-align:left;padding:8px">Color</th><th style="text-align:center;padding:8px">Qty</th>
+          <th style="text-align:center;padding:8px">✓</th></tr></thead>
+        <tbody>${order.order_items?.map((it:any)=>`<tr style="border-bottom:1px solid #ddd">
+          <td style="padding:8px">${it.product_name}</td><td style="padding:8px">${it.variant_style}</td>
+          <td style="padding:8px">${it.color}</td><td style="text-align:center;padding:8px;font-weight:bold">${it.quantity}</td>
+          <td style="text-align:center;padding:8px">☐</td></tr>`).join('')||''}</tbody>
+      </table>
+      <div style="margin-top:48px;padding-top:16px;border-top:1px solid #ddd;font-size:11px;color:#666;display:flex;justify-content:space-between">
+        <p>Picked by: ____________________</p><p>Packed by: ____________________</p><p>Date: ____________________</p>
+      </div>
+    </div>`;
+  setTimeout(()=>{w.print();}, 300);
+}
 
 interface OrderWithItems {
   id: string;
