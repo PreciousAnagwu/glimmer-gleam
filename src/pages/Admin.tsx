@@ -25,7 +25,7 @@ import { AdminRewardsManager } from '@/components/admin/AdminRewardsManager';
 import { AdminContentManager } from '@/components/admin/AdminContentManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
-import { PackingSlip } from '@/components/admin/PackingSlip';
+
 import { Printer, Truck } from 'lucide-react';
 
 function printPackingSlip(order: any) {
