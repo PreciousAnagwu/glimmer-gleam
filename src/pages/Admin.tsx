@@ -463,6 +463,16 @@ export default function Admin() {
                                     </>
                                   )}
                                   <Separator />
+                                  <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" className="flex-1" onClick={() => printPackingSlip(order)}>
+                                      <Printer className="h-4 w-4 mr-2" /> Print Packing Slip
+                                    </Button>
+                                    {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                                      <Button variant="gold" size="sm" className="flex-1" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, 'delivered')}>
+                                        <Truck className="h-4 w-4 mr-2" /> Mark Delivered
+                                      </Button>
+                                    )}
+                                  </div>
                                   <div className="space-y-2">
                                     <p className="text-sm font-medium">Update Status</p>
                                     <div className="flex flex-wrap gap-2">
