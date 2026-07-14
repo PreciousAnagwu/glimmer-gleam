@@ -23,6 +23,7 @@ import { AdminQAManager } from '@/components/admin/AdminQAManager';
 import { AdminNewsletterManager } from '@/components/admin/AdminNewsletterManager';
 import { AdminRewardsManager } from '@/components/admin/AdminRewardsManager';
 import { AdminContentManager } from '@/components/admin/AdminContentManager';
+import { AdminCategoryManager } from '@/components/admin/AdminCategoryManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 
