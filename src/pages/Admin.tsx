@@ -568,6 +568,17 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="categories">
+            <Card>
+              <CardHeader>
+                <CardTitle>Categories</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminCategoryManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="coupons">
             <Card>
               <CardHeader>
