@@ -419,15 +419,22 @@ export function AdminProductManager() {
                           const fileName = `${Date.now()}-${file.name}`;
                           const { data, error } = await supabase.storage
                             .from('product-images')
-                            .upload(fileName, file);
+                            .upload(fileName, file, { cacheControl: '31536000', upsert: false });
                           if (error) {
                             toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
                           } else {
-                            const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(data.path);
-                            const imgs = [...form.images];
-                            imgs[i] = urlData.publicUrl;
-                            setForm({ ...form, images: imgs });
-                            toast({ title: 'Image uploaded!' });
+                            // Bucket is private (workspace blocks public buckets) — use a long-lived signed URL
+                            const { data: signed, error: signErr } = await supabase.storage
+                              .from('product-images')
+                              .createSignedUrl(data.path, 60 * 60 * 24 * 365 * 10); // 10 years
+                            if (signErr || !signed) {
+                              toast({ title: 'Upload failed', description: signErr?.message || 'Could not sign URL', variant: 'destructive' });
+                            } else {
+                              const imgs = [...form.images];
+                              imgs[i] = signed.signedUrl;
+                              setForm({ ...form, images: imgs });
+                              toast({ title: 'Image uploaded!' });
+                            }
                           }
                           setUploading(null);
                         }}
