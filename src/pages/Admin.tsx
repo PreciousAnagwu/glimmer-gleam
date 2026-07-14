@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2, Star, FileText
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2, Star, FileText, LayoutGrid
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import { AdminQAManager } from '@/components/admin/AdminQAManager';
 import { AdminNewsletterManager } from '@/components/admin/AdminNewsletterManager';
 import { AdminRewardsManager } from '@/components/admin/AdminRewardsManager';
 import { AdminContentManager } from '@/components/admin/AdminContentManager';
+import { AdminCategoryManager } from '@/components/admin/AdminCategoryManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 
@@ -314,6 +315,7 @@ export default function Admin() {
           <TabsList>
             <TabsTrigger value="orders"><Package className="mr-2 h-4 w-4" />Orders</TabsTrigger>
             <TabsTrigger value="products"><ShoppingBag className="mr-2 h-4 w-4" />Products</TabsTrigger>
+            <TabsTrigger value="categories"><LayoutGrid className="mr-2 h-4 w-4" />Categories</TabsTrigger>
             <TabsTrigger value="coupons"><Tag className="mr-2 h-4 w-4" />Coupons</TabsTrigger>
             <TabsTrigger value="qa"><MessageCircle className="mr-2 h-4 w-4" />Q&A</TabsTrigger>
             <TabsTrigger value="newsletter"><Mail className="mr-2 h-4 w-4" />Newsletter</TabsTrigger>
@@ -562,6 +564,17 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <AdminProductManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <Card>
+              <CardHeader>
+                <CardTitle>Categories</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AdminCategoryManager />
               </CardContent>
             </Card>
           </TabsContent>
