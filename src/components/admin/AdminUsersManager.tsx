@@ -53,12 +53,12 @@ export function AdminUsersManager() {
       supabase.from('profiles').select('user_id, name, email').in('user_id', ids),
     ]);
     const combined: AdminRow[] = ids.map((id) => {
-      const p = perms?.find((x: any) => x.user_id === id) || {};
-      const pr = profiles?.find((x: any) => x.user_id === id) || {};
+      const p: any = (perms as any[] | null)?.find((x: any) => x.user_id === id) || {};
+      const pr: any = (profiles as any[] | null)?.find((x: any) => x.user_id === id) || {};
       return {
         user_id: id,
-        email: (pr as any).email ?? null,
-        name: (pr as any).name ?? null,
+        email: pr.email ?? null,
+        name: pr.name ?? null,
         manage_orders: p.manage_orders ?? true,
         manage_products: p.manage_products ?? true,
         manage_categories: p.manage_categories ?? true,
@@ -68,7 +68,7 @@ export function AdminUsersManager() {
         manage_rewards: p.manage_rewards ?? true,
         manage_newsletters: p.manage_newsletters ?? true,
         notify_email: p.notify_email ?? true,
-        email_for_notifications: p.email_for_notifications ?? (pr as any).email ?? null,
+        email_for_notifications: p.email_for_notifications ?? pr.email ?? null,
       };
     });
     setRows(combined);
