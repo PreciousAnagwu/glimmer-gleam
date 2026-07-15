@@ -24,6 +24,7 @@ import { AdminNewsletterManager } from '@/components/admin/AdminNewsletterManage
 import { AdminRewardsManager } from '@/components/admin/AdminRewardsManager';
 import { AdminContentManager } from '@/components/admin/AdminContentManager';
 import { AdminCategoryManager } from '@/components/admin/AdminCategoryManager';
+import { AdminUsersManager } from '@/components/admin/AdminUsersManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 
