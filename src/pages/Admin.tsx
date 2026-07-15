@@ -636,6 +636,10 @@ export default function Admin() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="admins">
+            <AdminUsersManager />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
