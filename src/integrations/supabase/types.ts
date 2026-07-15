@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_permissions: {
+        Row: {
+          created_at: string
+          email_for_notifications: string | null
+          manage_admins: boolean
+          manage_categories: boolean
+          manage_content: boolean
+          manage_coupons: boolean
+          manage_newsletters: boolean
+          manage_orders: boolean
+          manage_products: boolean
+          manage_rewards: boolean
+          notify_email: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_for_notifications?: string | null
+          manage_admins?: boolean
+          manage_categories?: boolean
+          manage_content?: boolean
+          manage_coupons?: boolean
+          manage_newsletters?: boolean
+          manage_orders?: boolean
+          manage_products?: boolean
+          manage_rewards?: boolean
+          notify_email?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_for_notifications?: string | null
+          manage_admins?: boolean
+          manage_categories?: boolean
+          manage_content?: boolean
+          manage_coupons?: boolean
+          manage_newsletters?: boolean
+          manage_orders?: boolean
+          manage_products?: boolean
+          manage_rewards?: boolean
+          notify_email?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -888,6 +936,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_admin_permission: {
+        Args: { _perm: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
