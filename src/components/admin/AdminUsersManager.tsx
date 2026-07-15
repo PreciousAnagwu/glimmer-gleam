@@ -90,7 +90,7 @@ export function AdminUsersManager() {
   };
 
   const saveEmail = async (row: AdminRow, value: string) => {
-    await supabase.from('admin_permissions').upsert({ user_id: row.user_id, email_for_notifications: value }, { onConflict: 'user_id' });
+    await supabase.from('admin_permissions').upsert({ user_id: row.user_id, email_for_notifications: value } as any, { onConflict: 'user_id' });
     toast({ title: 'Email saved' });
   };
 
