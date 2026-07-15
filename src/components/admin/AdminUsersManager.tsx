@@ -109,7 +109,7 @@ export function AdminUsersManager() {
       }
       const { error } = await supabase.from('user_roles').insert({ user_id: profile.user_id, role: 'admin' });
       if (error && !error.message.includes('duplicate')) throw error;
-      await supabase.from('admin_permissions').upsert({ user_id: profile.user_id, email_for_notifications: profile.email }, { onConflict: 'user_id' });
+      await supabase.from('admin_permissions').upsert({ user_id: profile.user_id, email_for_notifications: profile.email } as any, { onConflict: 'user_id' });
       toast({ title: 'Admin added' });
       setInviteEmail('');
       load();
