@@ -396,6 +396,8 @@ export default function Checkout() {
 
         setOrderPlaced(true);
         clearCart();
+        // Fire-and-forget admin email notification
+        supabase.functions.invoke('notify-admins-order', { body: { orderId: order.id } }).catch((e) => console.warn('admin email skipped', e));
         toast({ title: 'Order placed!', description: 'We\'ll confirm your payment receipt shortly.' });
       }
     } catch (err: any) {
