@@ -82,7 +82,7 @@ export function AdminUsersManager() {
     setRows((rs) => rs.map((r) => r.user_id === row.user_id ? { ...r, [key]: next } : r));
     const { error } = await supabase
       .from('admin_permissions')
-      .upsert({ user_id: row.user_id, [key]: next }, { onConflict: 'user_id' });
+      .upsert({ user_id: row.user_id, [key]: next } as any, { onConflict: 'user_id' });
     if (error) {
       toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
       load();
