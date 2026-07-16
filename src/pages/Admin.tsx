@@ -191,6 +191,13 @@ export default function Admin() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Order updated', description: `Order status changed to ${status}.` });
+      // Email the customer for each meaningful lifecycle event
+      const events: string[] = [];
+      if (paymentStatus === 'paid') events.push('payment_confirmed');
+      if (['processing', 'shipped', 'delivered', 'cancelled'].includes(status)) events.push(status);
+      events.forEach((event) =>
+        supabase.functions.invoke('notify-customer', { body: { orderId, event } }).catch((e) => console.warn('customer email skipped', e))
+      );
       fetchOrders();
     }
     setUpdatingOrderId(null);
