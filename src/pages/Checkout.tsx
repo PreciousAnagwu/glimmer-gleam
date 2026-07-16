@@ -100,6 +100,10 @@ export default function Checkout() {
           if (res.data?.status === 'success') {
             setOrderPlaced(true);
             clearCart();
+            // Notify admins + customer for the confirmed Paystack payment
+            supabase.functions.invoke('notify-admins-order', { body: { orderId: verifyRef, event: 'new_order' } }).catch(() => {});
+            supabase.functions.invoke('notify-customer', { body: { orderId: verifyRef, event: 'order_placed' } }).catch(() => {});
+            supabase.functions.invoke('notify-customer', { body: { orderId: verifyRef, event: 'payment_confirmed' } }).catch(() => {});
             toast({ title: 'Payment successful!', description: 'Your order has been confirmed.' });
           } else {
             toast({ title: 'Payment failed', description: 'Please try again.', variant: 'destructive' });
@@ -396,8 +400,10 @@ export default function Checkout() {
 
         setOrderPlaced(true);
         clearCart();
-        // Fire-and-forget admin email notification
-        supabase.functions.invoke('notify-admins-order', { body: { orderId: order.id } }).catch((e) => console.warn('admin email skipped', e));
+        // Fire-and-forget: notify admins (receipt uploaded) + customer confirmations
+        supabase.functions.invoke('notify-admins-order', { body: { orderId: order.id, event: 'receipt_uploaded' } }).catch((e) => console.warn('admin email skipped', e));
+        supabase.functions.invoke('notify-customer', { body: { orderId: order.id, event: 'order_placed' } }).catch((e) => console.warn('customer email skipped', e));
+        supabase.functions.invoke('notify-customer', { body: { orderId: order.id, event: 'receipt_received' } }).catch((e) => console.warn('customer email skipped', e));
         toast({ title: 'Order placed!', description: 'We\'ll confirm your payment receipt shortly.' });
       }
     } catch (err: any) {
