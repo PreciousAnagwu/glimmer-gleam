@@ -100,6 +100,10 @@ export default function Checkout() {
           if (res.data?.status === 'success') {
             setOrderPlaced(true);
             clearCart();
+            // Notify admins + customer for the confirmed Paystack payment
+            supabase.functions.invoke('notify-admins-order', { body: { orderId: verifyRef, event: 'new_order' } }).catch(() => {});
+            supabase.functions.invoke('notify-customer', { body: { orderId: verifyRef, event: 'order_placed' } }).catch(() => {});
+            supabase.functions.invoke('notify-customer', { body: { orderId: verifyRef, event: 'payment_confirmed' } }).catch(() => {});
             toast({ title: 'Payment successful!', description: 'Your order has been confirmed.' });
           } else {
             toast({ title: 'Payment failed', description: 'Please try again.', variant: 'destructive' });
