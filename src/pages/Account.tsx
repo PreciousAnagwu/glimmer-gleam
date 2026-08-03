@@ -379,8 +379,22 @@ const Account: React.FC = () => {
                                 {order.status}
                               </span>
                             </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Download receipt"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const { data: its } = await supabase.from('order_items').select('*').eq('order_id', order.id);
+                                downloadOrderReceipt(order as never, (its as never) || []);
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
                             <ChevronRight className="h-5 w-5 text-muted-foreground" />
                           </div>
+
                         </Link>
                       ))}
                     </div>
