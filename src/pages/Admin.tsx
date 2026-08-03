@@ -203,7 +203,36 @@ export default function Admin() {
     setUpdatingOrderId(null);
   };
 
+  const reviewReceipt = async (orderId: string, approve: boolean, reason?: string) => {
+    setUpdatingOrderId(orderId);
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        payment_status: approve ? 'paid' : 'failed',
+        status: approve ? 'confirmed' : 'payment_failed',
+        payment_reviewed_at: new Date().toISOString(),
+        payment_reviewed_by: user?.id ?? null,
+        payment_rejection_reason: approve ? null : (reason?.trim() || 'Receipt could not be verified'),
+      } as never)
+      .eq('id', orderId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({
+        title: approve ? 'Receipt approved' : 'Receipt rejected',
+        description: approve ? 'Payment marked as paid and the customer was notified.' : 'The customer has been notified.',
+      });
+      supabase.functions
+        .invoke('notify-customer', { body: { orderId, event: approve ? 'payment_confirmed' : 'receipt_rejected', reason } })
+        .catch((e) => console.warn('customer email skipped', e));
+      fetchOrders();
+    }
+    setUpdatingOrderId(null);
+  };
+
   const toggleTestOrder = async (orderId: string, isTest: boolean) => {
+
     const { error } = await supabase.from('orders').update({ is_test_order: isTest }).eq('id', orderId);
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
     else {
