@@ -360,7 +360,10 @@ export default function Admin() {
   };
 
   const filteredOrders = orders.filter(o => {
-    if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+    if (statusFilter === 'awaiting_payment') {
+      if (o.payment_status !== 'awaiting_confirmation') return false;
+    } else if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
