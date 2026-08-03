@@ -492,17 +492,17 @@ export default function Admin() {
                                     )}
                                     <div className="flex justify-between font-bold text-base"><span>Total</span><span>{formatPrice(order.total)}</span></div>
                                   </div>
-                                  {order.payment_receipt_url && (
+                                  {(order.payment_receipt_url || order.payment_status === 'awaiting_confirmation') && (
                                     <>
                                       <Separator />
-                                      <div>
-                                        <p className="text-sm font-medium mb-2">Payment Receipt</p>
-                                        <a href={order.payment_receipt_url} target="_blank" rel="noopener noreferrer">
-                                          <img src={order.payment_receipt_url} alt="Receipt" className="max-h-48 rounded-lg border object-contain" />
-                                        </a>
-                                      </div>
+                                      <ReceiptReviewCard
+                                        order={order}
+                                        busy={updatingOrderId === order.id}
+                                        onReview={reviewReceipt}
+                                      />
                                     </>
                                   )}
+
                                   <Separator />
                                   <div className="flex gap-2">
                                     <Button variant="outline" size="sm" className="flex-1" onClick={() => printPackingSlip(order)}>
