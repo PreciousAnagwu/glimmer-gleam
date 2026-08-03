@@ -85,6 +85,80 @@ function printPackingSlip(order: any) {
   setTimeout(()=>{w.print();}, 300);
 }
 
+function ReceiptReviewCard({
+  order,
+  busy,
+  onReview,
+}: {
+  order: any;
+  busy: boolean;
+  onReview: (orderId: string, approve: boolean, reason?: string) => void;
+}) {
+  const [reason, setReason] = useState('');
+  const pending = order.payment_status === 'awaiting_confirmation';
+  const approved = order.payment_status === 'paid';
+  const rejected = order.payment_status === 'failed';
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">Bank Transfer Receipt</p>
+        {pending && <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Awaiting review</Badge>}
+        {approved && <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Approved</Badge>}
+        {rejected && <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Rejected</Badge>}
+      </div>
+
+      {order.payment_receipt_url ? (
+        <>
+          <a href={order.payment_receipt_url} target="_blank" rel="noopener noreferrer">
+            <img src={order.payment_receipt_url} alt="Payment receipt" className="max-h-48 w-full rounded-lg border object-contain" />
+          </a>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <a href={order.payment_receipt_url} target="_blank" rel="noopener noreferrer">
+                <Eye className="h-4 w-4 mr-1" /> Open full size
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={order.payment_receipt_url} download target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4 mr-1" /> Download
+              </a>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-muted-foreground">No receipt uploaded yet.</p>
+      )}
+
+      {order.payment_reviewed_at && (
+        <p className="text-xs text-muted-foreground">
+          Reviewed {new Date(order.payment_reviewed_at).toLocaleString()}
+          {order.payment_rejection_reason ? ` — reason: ${order.payment_rejection_reason}` : ''}
+        </p>
+      )}
+
+      {pending && (
+        <div className="space-y-2">
+          <Button variant="gold" size="sm" className="w-full" disabled={busy} onClick={() => onReview(order.id, true)}>
+            <CheckCircle className="h-4 w-4 mr-1" /> Approve Receipt & Mark Paid
+          </Button>
+          <Textarea
+            placeholder="Reason for rejection (sent to the customer)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={2}
+            className="text-sm"
+          />
+          <Button variant="destructive" size="sm" className="w-full" disabled={busy} onClick={() => onReview(order.id, false, reason)}>
+            <XCircle className="h-4 w-4 mr-1" /> Reject Receipt
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 interface OrderWithItems {
   id: string;
   created_at: string;
