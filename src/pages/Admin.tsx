@@ -29,6 +29,9 @@ import { AdminCategoryManager } from '@/components/admin/AdminCategoryManager';
 import { AdminUsersManager } from '@/components/admin/AdminUsersManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { AdminEmailLogs } from '@/components/admin/AdminEmailLogs';
+
 
 import { Printer, Truck } from 'lucide-react';
 
