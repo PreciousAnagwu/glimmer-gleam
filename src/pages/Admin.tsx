@@ -525,7 +525,6 @@ export default function Admin() {
                                     </div>
                                   </div>
 
-                                  </div>
                                   <Separator />
                                   <div className="space-y-3 rounded-lg bg-muted/50 p-3">
                                     <div className="flex items-center justify-between">
