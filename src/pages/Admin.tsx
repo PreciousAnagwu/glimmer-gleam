@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Package, Users, DollarSign, TrendingUp, Eye, CheckCircle, XCircle, Clock,
-  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2, Star, FileText, LayoutGrid
+  Loader2, Search, Filter, ChevronDown, ArrowLeft, ShieldCheck, FileImage, ShoppingBag, Tag, MessageCircle, Mail, Trash2, Star, FileText, LayoutGrid, Download, MailCheck
 } from 'lucide-react';
+
 import { Users as UsersIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,9 @@ import { AdminCategoryManager } from '@/components/admin/AdminCategoryManager';
 import { AdminUsersManager } from '@/components/admin/AdminUsersManager';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { AdminEmailLogs } from '@/components/admin/AdminEmailLogs';
+
 
 import { Printer, Truck } from 'lucide-react';
 
@@ -84,6 +88,80 @@ function printPackingSlip(order: any) {
     </div>`;
   setTimeout(()=>{w.print();}, 300);
 }
+
+function ReceiptReviewCard({
+  order,
+  busy,
+  onReview,
+}: {
+  order: any;
+  busy: boolean;
+  onReview: (orderId: string, approve: boolean, reason?: string) => void;
+}) {
+  const [reason, setReason] = useState('');
+  const pending = order.payment_status === 'awaiting_confirmation';
+  const approved = order.payment_status === 'paid';
+  const rejected = order.payment_status === 'failed';
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">Bank Transfer Receipt</p>
+        {pending && <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Awaiting review</Badge>}
+        {approved && <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Approved</Badge>}
+        {rejected && <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Rejected</Badge>}
+      </div>
+
+      {order.payment_receipt_url ? (
+        <>
+          <a href={order.payment_receipt_url} target="_blank" rel="noopener noreferrer">
+            <img src={order.payment_receipt_url} alt="Payment receipt" className="max-h-48 w-full rounded-lg border object-contain" />
+          </a>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <a href={order.payment_receipt_url} target="_blank" rel="noopener noreferrer">
+                <Eye className="h-4 w-4 mr-1" /> Open full size
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={order.payment_receipt_url} download target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4 mr-1" /> Download
+              </a>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-muted-foreground">No receipt uploaded yet.</p>
+      )}
+
+      {order.payment_reviewed_at && (
+        <p className="text-xs text-muted-foreground">
+          Reviewed {new Date(order.payment_reviewed_at).toLocaleString()}
+          {order.payment_rejection_reason ? ` — reason: ${order.payment_rejection_reason}` : ''}
+        </p>
+      )}
+
+      {pending && (
+        <div className="space-y-2">
+          <Button variant="gold" size="sm" className="w-full" disabled={busy} onClick={() => onReview(order.id, true)}>
+            <CheckCircle className="h-4 w-4 mr-1" /> Approve Receipt & Mark Paid
+          </Button>
+          <Textarea
+            placeholder="Reason for rejection (sent to the customer)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={2}
+            className="text-sm"
+          />
+          <Button variant="destructive" size="sm" className="w-full" disabled={busy} onClick={() => onReview(order.id, false, reason)}>
+            <XCircle className="h-4 w-4 mr-1" /> Reject Receipt
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 interface OrderWithItems {
   id: string;
@@ -203,7 +281,36 @@ export default function Admin() {
     setUpdatingOrderId(null);
   };
 
+  const reviewReceipt = async (orderId: string, approve: boolean, reason?: string) => {
+    setUpdatingOrderId(orderId);
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        payment_status: approve ? 'paid' : 'failed',
+        status: approve ? 'confirmed' : 'payment_failed',
+        payment_reviewed_at: new Date().toISOString(),
+        payment_reviewed_by: user?.id ?? null,
+        payment_rejection_reason: approve ? null : (reason?.trim() || 'Receipt could not be verified'),
+      } as never)
+      .eq('id', orderId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({
+        title: approve ? 'Receipt approved' : 'Receipt rejected',
+        description: approve ? 'Payment marked as paid and the customer was notified.' : 'The customer has been notified.',
+      });
+      supabase.functions
+        .invoke('notify-customer', { body: { orderId, event: approve ? 'payment_confirmed' : 'receipt_rejected', reason } })
+        .catch((e) => console.warn('customer email skipped', e));
+      fetchOrders();
+    }
+    setUpdatingOrderId(null);
+  };
+
   const toggleTestOrder = async (orderId: string, isTest: boolean) => {
+
     const { error } = await supabase.from('orders').update({ is_test_order: isTest }).eq('id', orderId);
     if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
     else {
@@ -253,7 +360,10 @@ export default function Admin() {
   };
 
   const filteredOrders = orders.filter(o => {
-    if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+    if (statusFilter === 'awaiting_payment') {
+      if (o.payment_status !== 'awaiting_confirmation') return false;
+    } else if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
@@ -331,6 +441,8 @@ export default function Admin() {
             <TabsTrigger value="rewards"><Star className="mr-2 h-4 w-4" />Rewards</TabsTrigger>
             <TabsTrigger value="content"><FileText className="mr-2 h-4 w-4" />Site Content</TabsTrigger>
             <TabsTrigger value="admins"><UsersIcon className="mr-2 h-4 w-4" />Admins</TabsTrigger>
+            <TabsTrigger value="emails"><MailCheck className="mr-2 h-4 w-4" />Emails</TabsTrigger>
+
           </TabsList>
 
           <TabsContent value="orders">
@@ -347,6 +459,8 @@ export default function Admin() {
                   <SelectTrigger className="w-40"><Filter className="mr-2 h-4 w-4" /><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="awaiting_payment">💳 Awaiting receipt review</SelectItem>
+
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="confirmed">Confirmed</SelectItem>
                     <SelectItem value="processing">Processing</SelectItem>
@@ -463,17 +577,17 @@ export default function Admin() {
                                     )}
                                     <div className="flex justify-between font-bold text-base"><span>Total</span><span>{formatPrice(order.total)}</span></div>
                                   </div>
-                                  {order.payment_receipt_url && (
+                                  {(order.payment_receipt_url || order.payment_status === 'awaiting_confirmation') && (
                                     <>
                                       <Separator />
-                                      <div>
-                                        <p className="text-sm font-medium mb-2">Payment Receipt</p>
-                                        <a href={order.payment_receipt_url} target="_blank" rel="noopener noreferrer">
-                                          <img src={order.payment_receipt_url} alt="Receipt" className="max-h-48 rounded-lg border object-contain" />
-                                        </a>
-                                      </div>
+                                      <ReceiptReviewCard
+                                        order={order}
+                                        busy={updatingOrderId === order.id}
+                                        onReview={reviewReceipt}
+                                      />
                                     </>
                                   )}
+
                                   <Separator />
                                   <div className="flex gap-2">
                                     <Button variant="outline" size="sm" className="flex-1" onClick={() => printPackingSlip(order)}>
@@ -494,17 +608,8 @@ export default function Admin() {
                                         </Button>
                                       ))}
                                     </div>
-                                    {order.payment_status === 'awaiting_confirmation' && (
-                                      <div className="flex gap-2 mt-2">
-                                        <Button variant="gold" size="sm" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, 'confirmed', 'paid')}>
-                                          <CheckCircle className="h-4 w-4 mr-1" /> Confirm Payment
-                                        </Button>
-                                        <Button variant="destructive" size="sm" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, 'payment_failed', 'failed')}>
-                                          <XCircle className="h-4 w-4 mr-1" /> Reject
-                                        </Button>
-                                      </div>
-                                    )}
                                   </div>
+
                                   <Separator />
                                   <div className="space-y-3 rounded-lg bg-muted/50 p-3">
                                     <div className="flex items-center justify-between">
@@ -647,6 +752,11 @@ export default function Admin() {
           <TabsContent value="admins">
             <AdminUsersManager />
           </TabsContent>
+
+          <TabsContent value="emails">
+            <AdminEmailLogs />
+          </TabsContent>
+
         </Tabs>
       </main>
     </div>

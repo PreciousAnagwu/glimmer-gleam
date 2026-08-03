@@ -3,9 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { Loader2, Package, CheckCircle2, Truck, Home, Clock } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Truck, Home, Clock, Download, Printer, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
+import { printOrderReceipt, downloadOrderReceipt } from '@/lib/receipt';
+
 
 const STAGES = [
   { key: 'pending', label: 'Order Placed', icon: Clock },
@@ -102,6 +104,57 @@ export default function OrderTracking() {
               <h3 className="font-medium mb-2">Shipping to</h3>
               <p className="text-sm text-muted-foreground">{order.shipping_name}<br />{order.shipping_address}<br />{order.shipping_city}, {order.shipping_state}<br />{order.shipping_phone}</p>
             </div>
+
+            {/* Payment & receipt */}
+            <div className="mt-6 rounded-xl border border-border p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-medium">Payment</h3>
+                  <p className="text-sm text-muted-foreground capitalize">{order.payment_method} — {String(order.payment_status).replace(/_/g, ' ')}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => printOrderReceipt(order, items)}>
+                    <Printer className="h-4 w-4 mr-2" /> Print receipt
+                  </Button>
+                  <Button variant="gold" size="sm" onClick={() => downloadOrderReceipt(order, items)}>
+                    <Download className="h-4 w-4 mr-2" /> Download receipt
+                  </Button>
+                </div>
+              </div>
+
+              {order.payment_status === 'awaiting_confirmation' && (
+                <p className="mt-4 rounded-lg bg-gold/10 p-3 text-sm text-muted-foreground">
+                  ⏳ We've received your transfer receipt and our team is verifying it. You'll be notified as soon as it's approved.
+                </p>
+              )}
+
+              {order.payment_status === 'failed' && (
+                <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                  <p className="font-medium text-destructive flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Payment could not be verified</p>
+                  {order.payment_rejection_reason && (
+                    <p className="mt-1 text-muted-foreground">Reason: {order.payment_rejection_reason}</p>
+                  )}
+                  <p className="mt-1 text-muted-foreground">Please re-upload a valid receipt or contact support.</p>
+                </div>
+              )}
+
+              {order.payment_receipt_url && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-2">Your uploaded transfer receipt</p>
+                  <a href={order.payment_receipt_url} target="_blank" rel="noopener noreferrer" className="inline-block">
+                    <img src={order.payment_receipt_url} alt="Uploaded payment receipt" className="max-h-56 rounded-lg border border-border object-contain" />
+                  </a>
+                  <div className="mt-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={order.payment_receipt_url} download target="_blank" rel="noopener noreferrer">
+                        <Download className="h-4 w-4 mr-2" /> Download uploaded receipt
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
           </>
         )}
       </main>

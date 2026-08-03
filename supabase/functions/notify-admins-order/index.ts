@@ -67,6 +67,12 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('RESEND_API_KEY');
     if (!apiKey) {
       console.log('[notify-admins-order] RESEND_API_KEY missing — skipping email. Would notify:', recipients);
+      await supabase.from('email_logs').insert(
+        recipients.map((r) => ({
+          recipient: r, subject: null, template: 'notify-admins-order', event,
+          order_id: order.id, status: 'skipped', error: 'RESEND_API_KEY not configured',
+        })),
+      );
       return new Response(JSON.stringify({ skipped: true, recipients, event }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -105,16 +111,25 @@ Deno.serve(async (req) => {
       : `🛎️ New order #${shortId} — ₦${Number(order.total).toLocaleString()}`;
 
     const results = await Promise.allSettled(
-      recipients.map((to) =>
-        fetch('https://api.resend.com/emails', {
+      recipients.map(async (to) => {
+        const r = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             from: Deno.env.get('ADMIN_NOTIFY_FROM') || "J's Jewels <orders@example.com>",
             to, subject, html,
           }),
-        }).then((r) => r.text()),
-      ),
+        });
+        const text = await r.text();
+        let providerId: string | null = null;
+        try { providerId = JSON.parse(text)?.id ?? null; } catch { /* non-JSON */ }
+        await supabase.from('email_logs').insert({
+          recipient: to, subject, template: 'notify-admins-order', event,
+          order_id: order.id, status: r.ok ? 'sent' : 'failed',
+          provider_id: providerId, error: r.ok ? null : text.slice(0, 500),
+        });
+        return text;
+      }),
     );
 
     return new Response(JSON.stringify({ sent: results.length, recipients, event }), {

@@ -128,6 +128,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          error: string | null
+          event: string | null
+          id: string
+          order_id: string | null
+          provider_id: string | null
+          recipient: string
+          status: string
+          subject: string | null
+          template: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event?: string | null
+          id?: string
+          order_id?: string | null
+          provider_id?: string | null
+          recipient: string
+          status?: string
+          subject?: string | null
+          template?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event?: string | null
+          id?: string
+          order_id?: string | null
+          provider_id?: string | null
+          recipient?: string
+          status?: string
+          subject?: string | null
+          template?: string | null
+        }
+        Relationships: []
+      }
       game_plays: {
         Row: {
           game_type: string
@@ -419,6 +458,9 @@ export type Database = {
           payment_method: string
           payment_receipt_url: string | null
           payment_reference: string | null
+          payment_rejection_reason: string | null
+          payment_reviewed_at: string | null
+          payment_reviewed_by: string | null
           payment_status: string
           shipping_address: string
           shipping_city: string
@@ -448,6 +490,9 @@ export type Database = {
           payment_method: string
           payment_receipt_url?: string | null
           payment_reference?: string | null
+          payment_rejection_reason?: string | null
+          payment_reviewed_at?: string | null
+          payment_reviewed_by?: string | null
           payment_status?: string
           shipping_address: string
           shipping_city: string
@@ -477,6 +522,9 @@ export type Database = {
           payment_method?: string
           payment_receipt_url?: string | null
           payment_reference?: string | null
+          payment_rejection_reason?: string | null
+          payment_reviewed_at?: string | null
+          payment_reviewed_by?: string | null
           payment_status?: string
           shipping_address?: string
           shipping_city?: string

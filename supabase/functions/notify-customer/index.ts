@@ -14,11 +14,13 @@ type CustomerEvent =
   | 'processing'
   | 'shipped'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'receipt_rejected';
 
 interface Payload {
   orderId: string;
   event: CustomerEvent;
+  reason?: string;
 }
 
 const COPY: Record<CustomerEvent, { subject: (id: string) => string; heading: string; body: string }> = {
@@ -28,14 +30,26 @@ const COPY: Record<CustomerEvent, { subject: (id: string) => string; heading: st
   processing:        { subject: (id) => `📦 Preparing your order #${id}`, heading: '📦 Preparing your order', body: 'Your order is being carefully prepared and packaged. You will get another update when it ships.' },
   shipped:           { subject: (id) => `🚚 Your order #${id} has shipped`, heading: '🚚 Your order has shipped', body: 'Your parcel is on its way! Track your delivery from your account.' },
   delivered:         { subject: (id) => `✨ Delivered — order #${id}`, heading: '✨ Your order was delivered', body: 'Your order has been marked as delivered. We hope you love your jewels — reviews are appreciated!' },
+  receipt_rejected:  { subject: (id) => `⚠️ Payment receipt needs attention — order #${id}`, heading: '⚠️ We could not verify your receipt', body: "We reviewed the bank transfer receipt you uploaded but couldn't verify the payment. Please upload a clearer or corrected receipt, or reply to this email and our team will help." },
   cancelled:         { subject: (id) => `❌ Order #${id} cancelled`, heading: '❌ Your order was cancelled', body: 'Your order has been cancelled. If you have questions or believe this is an error, please reach out to our team.' },
 };
+
+async function logEmail(
+  supabase: any,
+  row: { recipient: string; subject?: string; template?: string; event?: string; order_id?: string; status: string; provider_id?: string | null; error?: string | null },
+) {
+  try {
+    await supabase.from('email_logs').insert(row);
+  } catch (e) {
+    console.warn('[notify-customer] email log failed', e);
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { orderId, event }: Payload = await req.json();
+    const { orderId, event, reason }: Payload = await req.json();
     if (!orderId || !event) throw new Error('orderId and event are required');
     if (!(event in COPY)) throw new Error(`Unknown event: ${event}`);
 
@@ -65,6 +79,10 @@ Deno.serve(async (req) => {
 
     if (!apiKey) {
       console.log('[notify-customer] RESEND_API_KEY missing — skipping send to', to, 'event:', event);
+      await logEmail(supabase, {
+        recipient: to, subject: copy.subject(shortId), template: 'notify-customer', event,
+        order_id: order.id, status: 'skipped', error: 'RESEND_API_KEY not configured',
+      });
       return new Response(JSON.stringify({ skipped: true, to, event }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -78,6 +96,7 @@ Deno.serve(async (req) => {
         <h2 style="color:#333;margin-top:24px">${copy.heading}</h2>
         <p style="font-size:15px;line-height:1.6">Hi ${escapeHtml(order.shipping_name?.split(' ')[0] || 'there')},</p>
         <p style="font-size:15px;line-height:1.6">${copy.body}</p>
+        ${event === 'receipt_rejected' && reason ? `<div style="margin:16px 0;padding:14px;background:#fef2f2;border-left:4px solid #dc2626;border-radius:4px"><p style="margin:0;font-size:14px"><strong>Reason:</strong> ${escapeHtml(reason)}</p></div>` : ''}
         <div style="margin:20px 0;padding:16px;background:#faf6ee;border-radius:6px">
           <p style="margin:0"><strong>Order:</strong> #${shortId}</p>
           <p style="margin:6px 0 0"><strong>Total:</strong> ₦${Number(order.total).toLocaleString()}</p>
@@ -101,6 +120,15 @@ Deno.serve(async (req) => {
     });
     const body = await res.text();
     if (!res.ok) console.error('[notify-customer] resend error', res.status, body);
+
+    let providerId: string | null = null;
+    try { providerId = JSON.parse(body)?.id ?? null; } catch { /* non-JSON body */ }
+
+    await logEmail(supabase, {
+      recipient: to, subject: copy.subject(shortId), template: 'notify-customer', event,
+      order_id: order.id, status: res.ok ? 'sent' : 'failed',
+      provider_id: providerId, error: res.ok ? null : body.slice(0, 500),
+    });
 
     return new Response(JSON.stringify({ sent: res.ok, to, event }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

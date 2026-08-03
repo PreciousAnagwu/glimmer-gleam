@@ -10,6 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Download } from 'lucide-react';
+import { downloadOrderReceipt } from '@/lib/receipt';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartStore } from '@/store/cartStore';
@@ -379,8 +382,22 @@ const Account: React.FC = () => {
                                 {order.status}
                               </span>
                             </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Download receipt"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const { data: its } = await supabase.from('order_items').select('*').eq('order_id', order.id);
+                                downloadOrderReceipt(order as never, (its as never) || []);
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
                             <ChevronRight className="h-5 w-5 text-muted-foreground" />
                           </div>
+
                         </Link>
                       ))}
                     </div>
