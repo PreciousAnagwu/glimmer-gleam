@@ -745,6 +745,11 @@ export default function Admin() {
           <TabsContent value="admins">
             <AdminUsersManager />
           </TabsContent>
+
+          <TabsContent value="emails">
+            <AdminEmailLogs />
+          </TabsContent>
+
         </Tabs>
       </main>
     </div>
