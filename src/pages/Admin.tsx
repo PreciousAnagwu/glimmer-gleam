@@ -438,6 +438,8 @@ export default function Admin() {
             <TabsTrigger value="rewards"><Star className="mr-2 h-4 w-4" />Rewards</TabsTrigger>
             <TabsTrigger value="content"><FileText className="mr-2 h-4 w-4" />Site Content</TabsTrigger>
             <TabsTrigger value="admins"><UsersIcon className="mr-2 h-4 w-4" />Admins</TabsTrigger>
+            <TabsTrigger value="emails"><MailCheck className="mr-2 h-4 w-4" />Emails</TabsTrigger>
+
           </TabsList>
 
           <TabsContent value="orders">
