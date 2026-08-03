@@ -3,9 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { Loader2, Package, CheckCircle2, Truck, Home, Clock } from 'lucide-react';
+import { Loader2, Package, CheckCircle2, Truck, Home, Clock, Download, Printer, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/components/SEO';
+import { printOrderReceipt, downloadOrderReceipt } from '@/lib/receipt';
+
 
 const STAGES = [
   { key: 'pending', label: 'Order Placed', icon: Clock },
