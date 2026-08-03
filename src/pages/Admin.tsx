@@ -459,6 +459,8 @@ export default function Admin() {
                   <SelectTrigger className="w-40"><Filter className="mr-2 h-4 w-4" /><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="awaiting_payment">💳 Awaiting receipt review</SelectItem>
+
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="confirmed">Confirmed</SelectItem>
                     <SelectItem value="processing">Processing</SelectItem>
