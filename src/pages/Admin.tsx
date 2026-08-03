@@ -523,16 +523,8 @@ export default function Admin() {
                                         </Button>
                                       ))}
                                     </div>
-                                    {order.payment_status === 'awaiting_confirmation' && (
-                                      <div className="flex gap-2 mt-2">
-                                        <Button variant="gold" size="sm" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, 'confirmed', 'paid')}>
-                                          <CheckCircle className="h-4 w-4 mr-1" /> Confirm Payment
-                                        </Button>
-                                        <Button variant="destructive" size="sm" disabled={updatingOrderId === order.id} onClick={() => updateOrderStatus(order.id, 'payment_failed', 'failed')}>
-                                          <XCircle className="h-4 w-4 mr-1" /> Reject
-                                        </Button>
-                                      </div>
-                                    )}
+                                  </div>
+
                                   </div>
                                   <Separator />
                                   <div className="space-y-3 rounded-lg bg-muted/50 p-3">
