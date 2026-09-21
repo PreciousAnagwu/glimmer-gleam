@@ -75,7 +75,12 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('RESEND_API_KEY');
     const shortId = String(order.id).slice(0, 8).toUpperCase();
     const copy = COPY[event];
-    const trackUrl = `${Deno.env.get('PUBLIC_APP_URL') || ''}/order/${order.id}`;
+    // Build an absolute, clickable tracking URL. Route in the app is /track/:id
+    const rawBase = (Deno.env.get('PUBLIC_APP_URL') || '').trim();
+    const base = rawBase
+      ? (/^https?:\/\//i.test(rawBase) ? rawBase : `https://${rawBase}`).replace(/\/+$/, '')
+      : '';
+    const trackUrl = base ? `${base}/track/${order.id}` : '';
 
     if (!apiKey) {
       console.log('[notify-customer] RESEND_API_KEY missing — skipping send to', to, 'event:', event);
